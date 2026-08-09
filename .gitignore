@@ -22,3 +22,4 @@
 .idea
 .ecs_cache
 /.cursor
+/.worktrees/
