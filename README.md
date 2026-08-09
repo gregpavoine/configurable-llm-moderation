@@ -1,61 +1,15 @@
-# API Skeleton
+# Service de modération des commentaires
 
-Base de projet Symfony (API REST) suivant une architecture DDD/CQRS, prête à accueillir un cas d'usage.
+API Symfony 8 / PHP 8.5 structurée en DDD-CQRS, documentée par OpenAPI sur `/doc` en environnement `dev`.
+`POST /comments` accuse réception en `202`; un auteur banni est rejeté immédiatement, sans modération.
+`GET /comments/{id}` expose le détail et `GET /comments` filtre par éditeur/statut avec pagination.
+Installation : `composer install && php bin/console doctrine:migrations:migrate --no-interaction`; contrôle : `vendor/bin/phpunit && vendor/bin/phpstan analyse && vendor/bin/phparkitect check`.
+Traitement : `php bin/console messenger:consume async -vv` (transport Doctrine, retries et file d’échec configurés).
 
-## Architecture
+## Choix et limites
 
-Le projet suit une architecture DDD/CQRS :
-
-- `src/Domain/` — Logique métier (entités, value objects, interfaces repository, exceptions)
-- `src/Application/` — Handlers de commandes (`Command/`) et de requêtes (`Query/`), vues de lecture (DTO)
-- `src/Infrastructure/` — Persistence (Doctrine), framework (Symfony), implémentations des ports
-- `src/UI/` — Controllers, DTOs d'entrée (`*Params` / `*Request`), organisés par action
-
-Les conventions de code détaillées (nommage, validation, gestion d'erreurs, Messenger) sont décrites dans [`AGENTS.md`](AGENTS.md).
-
-## Endpoints fournis
-
-| Méthode | Route      | Réponse                                            |
-|---------|------------|----------------------------------------------------|
-| `GET`   | `/`        | `{ "message": "API Skeleton.", "version": "…" }`   |
-| `GET`   | `/health`  | `{ "status": "ok" }`                               |
-
-## Documentation API
-
-La documentation OpenAPI est générée automatiquement par [NelmioApiDocBundle](https://github.com/nelmio/NelmioApiDocBundle).
-
-Swagger UI est accessible à l'adresse `/doc` (uniquement en environnement `dev`). La configuration se trouve dans `config/packages/dev/nelmio_api_doc.yaml`.
-
-## Configuration
-
-Renseigner les variables d'environnement dans `.env.local` (non commité) :
-
-- `APP_SECRET` — secret de l'application.
-- `DATABASE_URL` — DSN de la base de données Doctrine.
-
-## Commandes
-
-Les commandes Symfony/Doctrine s'exécutent via `php bin/console <commande>` (ou dans le conteneur applicatif si vous utilisez Docker).
-
-### Base de données
-
-```bash
-# Générer une migration à partir des différences entité / BDD
-php bin/console doctrine:migrations:diff
-
-# Exécuter les migrations
-php bin/console doctrine:migrations:migrate
-
-# Charger les fixtures (dev/test) — répertoire src/Infrastructure/Persistence/Fixture
-php bin/console doctrine:fixtures:load --append
-```
-
-## Qualité
-
-```bash
-# Analyse statique (PHPStan niveau 9 sur src/)
-vendor/bin/phpstan analyse
-
-# Tests
-vendor/bin/phpunit
-```
+La modération est asynchrone pour isoler latence et indisponibilité du LLM, permettre les retries et garder l’accusé rapide.
+Le port `ModerationService` permet un fournisseur externe; faute de clé, le livrable utilise un stub déterministe, explicite et testable.
+Les règles couvrent menace, haine/discrimination, harcèlement, diffamation et contenu illicite, d’après la [LCEN, article 6](https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000044067469/2024-01-26) et [Service-Public](https://www.service-public.fr/particuliers/vosdroits/F32239); elles ne remplacent pas une qualification juridique.
+Les extensions optionnelles (workflow manuel, API de bannissement, notifications tierces, webhook Facebook) sont volontairement laissées hors périmètre plutôt qu’incomplètes.
+**Usage de l’IA —** Codex a servi à analyser le squelette, proposer l’architecture et générer code/tests; j’ai conservé les patterns conformes au brief, corrigé les types et versions, et rejeté les options hors périmètre après vérification automatisée.
