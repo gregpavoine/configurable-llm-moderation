@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gsoi\CommentModeration\Tests\Functional\UI\Api;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Gsoi\CommentModeration\Infrastructure\Persistence\Doctrine\BannedUser;
@@ -34,6 +35,7 @@ final class SubmitCommentControllerTest extends WebTestCase
         self::assertIsArray($payload);
         self::assertSame('pending', $payload['status'] ?? null);
         self::assertIsString($payload['id'] ?? null);
+        self::assertSame(1, $this->queuedMessageCount());
     }
 
     public function testABannedAuthorsCommentIsAcknowledgedAsRejected(): void
@@ -53,11 +55,19 @@ final class SubmitCommentControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
         self::assertStringContainsString('"status":"rejected"', $client->getResponse()->getContent());
+        self::assertSame(0, $this->queuedMessageCount());
     }
 
     private function createSchema(): void
     {
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         (new SchemaTool($entityManager))->createSchema($entityManager->getMetadataFactory()->getAllMetadata());
+    }
+
+    private function queuedMessageCount(): int
+    {
+        $connection = self::getContainer()->get(Connection::class);
+
+        return (int) $connection->fetchOne('SELECT COUNT(*) FROM messenger_messages');
     }
 }
