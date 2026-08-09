@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Infrastructure\Persistence\Doctrine;
+namespace Gsoi\CommentModeration\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Gsoi\Skeleton\Domain\Comment\BannedUserRepository;
+use Gsoi\CommentModeration\Domain\Comment\BannedUserRepository;
 
 final readonly class DoctrineBannedUserRepository implements BannedUserRepository
 {

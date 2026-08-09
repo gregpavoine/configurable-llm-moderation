@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\UI\Api\Comment;
+namespace Gsoi\CommentModeration\UI\Api\Comment;
 
-use Gsoi\Skeleton\Application\Query\CommentView;
-use Gsoi\Skeleton\Application\Query\GetComment\GetCommentQuery;
-use Gsoi\Skeleton\UI\Api\HandleTrait;
+use Gsoi\CommentModeration\Application\Query\CommentView;
+use Gsoi\CommentModeration\Application\Query\GetComment\GetCommentQuery;
+use Gsoi\CommentModeration\UI\Api\HandleTrait;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Messenger\MessageBusInterface;

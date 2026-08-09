@@ -16,19 +16,19 @@ return static function (Config $config): void {
 
     $rules = [
         Rule::allClasses()
-            ->that(new ResideInOneOfTheseNamespaces('Gsoi\Skeleton\Domain'))
+            ->that(new ResideInOneOfTheseNamespaces('Gsoi\CommentModeration\Domain'))
             ->should(new NotDependsOnTheseNamespaces([
-                'Gsoi\Skeleton\Application',
-                'Gsoi\Skeleton\Infrastructure',
-                'Gsoi\Skeleton\UI',
+                'Gsoi\CommentModeration\Application',
+                'Gsoi\CommentModeration\Infrastructure',
+                'Gsoi\CommentModeration\UI',
                 'Doctrine\ORM\EntityManagerInterface',
             ]))
             ->because('the domain must remain independent from outer layers'),
         Rule::allClasses()
-            ->that(new ResideInOneOfTheseNamespaces('Gsoi\Skeleton\Application'))
+            ->that(new ResideInOneOfTheseNamespaces('Gsoi\CommentModeration\Application'))
             ->should(new NotDependsOnTheseNamespaces([
-                'Gsoi\Skeleton\Infrastructure',
-                'Gsoi\Skeleton\UI',
+                'Gsoi\CommentModeration\Infrastructure',
+                'Gsoi\CommentModeration\UI',
                 'Doctrine\ORM\EntityManagerInterface',
             ]))
             ->because('application handlers must use domain ports'),
@@ -37,10 +37,10 @@ return static function (Config $config): void {
             ->should(new HaveAttribute('Symfony\Component\Messenger\Attribute\AsMessageHandler'))
             ->because('application handlers must be registered explicitly'),
         Rule::allClasses()
-            ->except('Gsoi\Skeleton\Domain\DomainException')
+            ->except('Gsoi\CommentModeration\Domain\DomainException')
             ->that(new HaveNameMatching('*Exception'))
-            ->andThat(new ResideInOneOfTheseNamespaces('Gsoi\Skeleton\Domain'))
-            ->should(new Extend('Gsoi\Skeleton\Domain\DomainException'))
+            ->andThat(new ResideInOneOfTheseNamespaces('Gsoi\CommentModeration\Domain'))
+            ->should(new Extend('Gsoi\CommentModeration\Domain\DomainException'))
             ->because('domain exceptions share a stable base type'),
     ];
 

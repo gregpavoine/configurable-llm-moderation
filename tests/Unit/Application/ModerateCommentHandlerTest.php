@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Tests\Unit\Application;
+namespace Gsoi\CommentModeration\Tests\Unit\Application;
 
-use Gsoi\Skeleton\Application\Command\ModerateComment\ModerateCommentCommand;
-use Gsoi\Skeleton\Application\Command\ModerateComment\ModerateCommentHandler;
-use Gsoi\Skeleton\Domain\Comment\Comment;
-use Gsoi\Skeleton\Domain\Comment\CommentId;
-use Gsoi\Skeleton\Domain\Comment\CommentRepository;
-use Gsoi\Skeleton\Domain\Comment\Exception\CommentNotFoundException;
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
-use Gsoi\Skeleton\Domain\Moderation\ModerationDecision;
-use Gsoi\Skeleton\Domain\Moderation\ModerationService;
+use Gsoi\CommentModeration\Application\Command\ModerateComment\ModerateCommentCommand;
+use Gsoi\CommentModeration\Application\Command\ModerateComment\ModerateCommentHandler;
+use Gsoi\CommentModeration\Domain\Comment\Comment;
+use Gsoi\CommentModeration\Domain\Comment\CommentId;
+use Gsoi\CommentModeration\Domain\Comment\CommentRepository;
+use Gsoi\CommentModeration\Domain\Comment\Exception\CommentNotFoundException;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Domain\Moderation\ModerationDecision;
+use Gsoi\CommentModeration\Domain\Moderation\ModerationService;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Validation;

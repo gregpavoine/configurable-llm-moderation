@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Application\Command\ModerateComment;
+namespace Gsoi\CommentModeration\Application\Command\ModerateComment;
 
-use Gsoi\Skeleton\Domain\Comment\CommentId;
-use Gsoi\Skeleton\Domain\Comment\CommentRepository;
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
-use Gsoi\Skeleton\Domain\Moderation\ModerationService;
+use Gsoi\CommentModeration\Domain\Comment\CommentId;
+use Gsoi\CommentModeration\Domain\Comment\CommentRepository;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Domain\Moderation\ModerationService;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;

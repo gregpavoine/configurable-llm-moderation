@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\UI\Api\Comment;
+namespace Gsoi\CommentModeration\UI\Api\Comment;
 
-use Gsoi\Skeleton\Application\Query\CommentSearchResult;
-use Gsoi\Skeleton\Application\Query\CommentView;
-use Gsoi\Skeleton\Application\Query\SearchComments\SearchCommentsQuery;
-use Gsoi\Skeleton\UI\Api\HandleTrait;
+use Gsoi\CommentModeration\Application\Query\CommentSearchResult;
+use Gsoi\CommentModeration\Application\Query\CommentView;
+use Gsoi\CommentModeration\Application\Query\SearchComments\SearchCommentsQuery;
+use Gsoi\CommentModeration\UI\Api\HandleTrait;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;

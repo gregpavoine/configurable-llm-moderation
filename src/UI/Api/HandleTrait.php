@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\UI\Api;
+namespace Gsoi\CommentModeration\UI\Api;
 
 use Symfony\Component\Messenger\Exception\LogicException;
 use Symfony\Component\Messenger\MessageBusInterface;

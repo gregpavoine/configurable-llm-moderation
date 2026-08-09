@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Domain\Moderation;
+namespace Gsoi\CommentModeration\Domain\Moderation;
 
 interface ModerationService
 {

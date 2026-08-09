@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Tests\Unit\Application;
+namespace Gsoi\CommentModeration\Tests\Unit\Application;
 
-use Gsoi\Skeleton\Application\Command\ModerateComment\ModerateCommentCommand;
-use Gsoi\Skeleton\Application\Command\SubmitComment\SubmitCommentCommand;
-use Gsoi\Skeleton\Application\Command\SubmitComment\SubmitCommentHandler;
-use Gsoi\Skeleton\Domain\Comment\BannedUserRepository;
-use Gsoi\Skeleton\Domain\Comment\Comment;
-use Gsoi\Skeleton\Domain\Comment\CommentId;
-use Gsoi\Skeleton\Domain\Comment\CommentRepository;
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Application\Command\ModerateComment\ModerateCommentCommand;
+use Gsoi\CommentModeration\Application\Command\SubmitComment\SubmitCommentCommand;
+use Gsoi\CommentModeration\Application\Command\SubmitComment\SubmitCommentHandler;
+use Gsoi\CommentModeration\Domain\Comment\BannedUserRepository;
+use Gsoi\CommentModeration\Domain\Comment\Comment;
+use Gsoi\CommentModeration\Domain\Comment\CommentId;
+use Gsoi\CommentModeration\Domain\Comment\CommentRepository;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;

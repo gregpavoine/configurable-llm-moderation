@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Application\Command\SubmitComment;
+namespace Gsoi\CommentModeration\Application\Command\SubmitComment;
 
 use Symfony\Component\Validator\Constraints as Assert;
 

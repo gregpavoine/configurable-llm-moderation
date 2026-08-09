@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Tests\Functional\UI\Api;
+namespace Gsoi\CommentModeration\Tests\Functional\UI\Api;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
-use Gsoi\Skeleton\Infrastructure\Persistence\Doctrine\BannedUser;
+use Gsoi\CommentModeration\Infrastructure\Persistence\Doctrine\BannedUser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 

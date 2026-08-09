@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Application\Query\SearchComments;
+namespace Gsoi\CommentModeration\Application\Query\SearchComments;
 
 use Symfony\Component\Validator\Constraints as Assert;
 

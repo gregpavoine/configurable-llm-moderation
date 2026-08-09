@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Domain\Comment\Exception;
+namespace Gsoi\CommentModeration\Domain\Comment\Exception;
 
-use Gsoi\Skeleton\Domain\DomainException;
+use Gsoi\CommentModeration\Domain\DomainException;
 
 final class InvalidModerationTransitionException extends DomainException
 {

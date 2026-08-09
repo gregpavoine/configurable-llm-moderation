@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Tests\Functional\UI\Api;
+namespace Gsoi\CommentModeration\Tests\Functional\UI\Api;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;

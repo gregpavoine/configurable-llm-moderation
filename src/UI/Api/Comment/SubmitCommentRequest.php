@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\UI\Api\Comment;
+namespace Gsoi\CommentModeration\UI\Api\Comment;
 
 use OpenApi\Attributes as OA;
 

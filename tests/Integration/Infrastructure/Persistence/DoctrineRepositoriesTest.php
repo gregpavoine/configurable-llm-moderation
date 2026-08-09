@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Tests\Integration\Infrastructure\Persistence;
+namespace Gsoi\CommentModeration\Tests\Integration\Infrastructure\Persistence;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
-use Gsoi\Skeleton\Domain\Comment\Comment;
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
-use Gsoi\Skeleton\Infrastructure\Persistence\Doctrine\BannedUser;
-use Gsoi\Skeleton\Infrastructure\Persistence\Doctrine\DoctrineBannedUserRepository;
-use Gsoi\Skeleton\Infrastructure\Persistence\Doctrine\DoctrineCommentRepository;
+use Gsoi\CommentModeration\Domain\Comment\Comment;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Infrastructure\Persistence\Doctrine\BannedUser;
+use Gsoi\CommentModeration\Infrastructure\Persistence\Doctrine\DoctrineBannedUserRepository;
+use Gsoi\CommentModeration\Infrastructure\Persistence\Doctrine\DoctrineCommentRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class DoctrineRepositoriesTest extends KernelTestCase

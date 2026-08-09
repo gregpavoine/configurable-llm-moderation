@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Application\Query\GetComment;
+namespace Gsoi\CommentModeration\Application\Query\GetComment;
 
-use Gsoi\Skeleton\Application\Query\CommentView;
-use Gsoi\Skeleton\Domain\Comment\CommentId;
-use Gsoi\Skeleton\Domain\Comment\CommentRepository;
+use Gsoi\CommentModeration\Application\Query\CommentView;
+use Gsoi\CommentModeration\Domain\Comment\CommentId;
+use Gsoi\CommentModeration\Domain\Comment\CommentRepository;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;

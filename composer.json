@@ -1,6 +1,6 @@
 {
-    "name": "gsoi/skeleton",
-    "description": "Skeleton",
+    "name": "gsoi/comment-moderation",
+    "description": "Asynchronous comment moderation API",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",
@@ -27,7 +27,7 @@
         "symfony/uid": "8.0.*",
         "symfony/validator": "8.0.*",
         "symfony/yaml": "8.0.*",
-        "webmozart/assert": "*"
+        "webmozart/assert": "^2.4.1"
     },
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": "^4.3",
@@ -53,12 +53,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Gsoi\\Skeleton\\": "src/"
+            "Gsoi\\CommentModeration\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Gsoi\\Skeleton\\Tests\\": "tests/"
+            "Gsoi\\CommentModeration\\Tests\\": "tests/"
         }
     },
     "replace": {

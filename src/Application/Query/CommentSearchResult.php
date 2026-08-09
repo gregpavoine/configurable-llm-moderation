@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Application\Query;
+namespace Gsoi\CommentModeration\Application\Query;
 
 final readonly class CommentSearchResult
 {

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Application\Command\SubmitComment;
+namespace Gsoi\CommentModeration\Application\Command\SubmitComment;
 
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
 
 final readonly class SubmitCommentResult
 {

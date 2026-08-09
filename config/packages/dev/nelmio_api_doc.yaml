@@ -2,8 +2,8 @@ nelmio_api_doc:
     use_validation_groups: true
     documentation:
         info:
-            title: API Skeleton
-            description: API skeleton
+            title: Comment Moderation API
+            description: Asynchronous comment submission and moderation API
             version: '%env(resolve:REVISION)%'
         servers:
             -   url: http://localhost

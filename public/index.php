@@ -1,6 +1,6 @@
 <?php
 
-use Gsoi\Skeleton\Infrastructure\Framework\Symfony\Kernel;
+use Gsoi\CommentModeration\Infrastructure\Framework\Symfony\Kernel;
 
 require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 

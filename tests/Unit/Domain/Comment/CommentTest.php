@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Tests\Unit\Domain\Comment;
+namespace Gsoi\CommentModeration\Tests\Unit\Domain\Comment;
 
 use DateTimeImmutable;
-use Gsoi\Skeleton\Domain\Comment\Comment;
-use Gsoi\Skeleton\Domain\Comment\Exception\InvalidModerationTransitionException;
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Domain\Comment\Comment;
+use Gsoi\CommentModeration\Domain\Comment\Exception\InvalidModerationTransitionException;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Tests\Unit\Infrastructure\Moderation;
+namespace Gsoi\CommentModeration\Tests\Unit\Infrastructure\Moderation;
 
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
-use Gsoi\Skeleton\Infrastructure\Moderation\StubModerationService;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Infrastructure\Moderation\StubModerationService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

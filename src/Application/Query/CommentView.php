@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Application\Query;
+namespace Gsoi\CommentModeration\Application\Query;
 
-use Gsoi\Skeleton\Domain\Comment\Comment;
+use Gsoi\CommentModeration\Domain\Comment\Comment;
 
 final readonly class CommentView
 {

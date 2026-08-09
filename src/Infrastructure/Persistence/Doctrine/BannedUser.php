@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Infrastructure\Persistence\Doctrine;
+namespace Gsoi\CommentModeration\Infrastructure\Persistence\Doctrine;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;

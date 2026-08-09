@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Domain\Comment;
+namespace Gsoi\CommentModeration\Domain\Comment;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Gsoi\Skeleton\Domain\Comment\Exception\InvalidModerationTransitionException;
+use Gsoi\CommentModeration\Domain\Comment\Exception\InvalidModerationTransitionException;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'comments')]

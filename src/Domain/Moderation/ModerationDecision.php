@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Domain\Moderation;
+namespace Gsoi\CommentModeration\Domain\Moderation;
 
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
 
 final readonly class ModerationDecision
 {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Application\Query\SearchComments;
+namespace Gsoi\CommentModeration\Application\Query\SearchComments;
 
-use Gsoi\Skeleton\Application\Query\CommentSearchResult;
-use Gsoi\Skeleton\Application\Query\CommentView;
-use Gsoi\Skeleton\Domain\Comment\CommentRepository;
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Application\Query\CommentSearchResult;
+use Gsoi\CommentModeration\Application\Query\CommentView;
+use Gsoi\CommentModeration\Domain\Comment\CommentRepository;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;

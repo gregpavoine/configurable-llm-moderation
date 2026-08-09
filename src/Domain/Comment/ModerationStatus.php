@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Domain\Comment;
+namespace Gsoi\CommentModeration\Domain\Comment;
 
 enum ModerationStatus: string
 {

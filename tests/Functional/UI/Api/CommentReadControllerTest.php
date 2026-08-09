@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Tests\Functional\UI\Api;
+namespace Gsoi\CommentModeration\Tests\Functional\UI\Api;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
-use Gsoi\Skeleton\Domain\Comment\Comment;
+use Gsoi\CommentModeration\Domain\Comment\Comment;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class CommentReadControllerTest extends WebTestCase

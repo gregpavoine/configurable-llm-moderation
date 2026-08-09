@@ -1,6 +1,6 @@
 parameters:
     env(APP_ENV): ''
-    env(APP_NAME): 'skeleton'
+    env(APP_NAME): 'comment-moderation'
     env(REVISION): '1.0.0'
     env(APP_SECRET): ''
     env(DATABASE_URL): ''
@@ -15,8 +15,8 @@ services:
             calls:
                 - [ 'setSerializer', [ ] ]
 
-    Gsoi\Skeleton\:
+    Gsoi\CommentModeration\:
         resource: '../src/'
 
-    Gsoi\Skeleton\Domain\Moderation\ModerationService:
-        alias: Gsoi\Skeleton\Infrastructure\Moderation\StubModerationService
+    Gsoi\CommentModeration\Domain\Moderation\ModerationService:
+        alias: Gsoi\CommentModeration\Infrastructure\Moderation\StubModerationService

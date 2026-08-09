@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Infrastructure\Persistence\Doctrine;
+namespace Gsoi\CommentModeration\Infrastructure\Persistence\Doctrine;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
-use Gsoi\Skeleton\Domain\Comment\Comment;
-use Gsoi\Skeleton\Domain\Comment\CommentId;
-use Gsoi\Skeleton\Domain\Comment\CommentRepository;
-use Gsoi\Skeleton\Domain\Comment\Exception\CommentNotFoundException;
-use Gsoi\Skeleton\Domain\Comment\ModerationStatus;
+use Gsoi\CommentModeration\Domain\Comment\Comment;
+use Gsoi\CommentModeration\Domain\Comment\CommentId;
+use Gsoi\CommentModeration\Domain\Comment\CommentRepository;
+use Gsoi\CommentModeration\Domain\Comment\Exception\CommentNotFoundException;
+use Gsoi\CommentModeration\Domain\Comment\ModerationStatus;
 
 final readonly class DoctrineCommentRepository implements CommentRepository
 {

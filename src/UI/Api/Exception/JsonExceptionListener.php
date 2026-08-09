@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\UI\Api\Exception;
+namespace Gsoi\CommentModeration\UI\Api\Exception;
 
-use Gsoi\Skeleton\Domain\Comment\Exception\CommentNotFoundException;
+use Gsoi\CommentModeration\Domain\Comment\Exception\CommentNotFoundException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;

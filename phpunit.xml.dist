@@ -14,7 +14,7 @@
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
-        <server name="KERNEL_CLASS" value="Gsoi\Skeleton\Infrastructure\Framework\Symfony\Kernel" />
+        <server name="KERNEL_CLASS" value="Gsoi\CommentModeration\Infrastructure\Framework\Symfony\Kernel" />
         <server name="SHELL_VERBOSITY" value="-1" />
     </php>
 
@@ -32,8 +32,8 @@
 
     <extensions>
         <bootstrap class="Symfony\Bridge\PhpUnit\SymfonyExtension">
-            <parameter name="clock-mock-namespaces" value="Gsoi\Skeleton" />
-            <parameter name="dns-mock-namespaces" value="Gsoi\Skeleton" />
+            <parameter name="clock-mock-namespaces" value="Gsoi\CommentModeration" />
+            <parameter name="dns-mock-namespaces" value="Gsoi\CommentModeration" />
         </bootstrap>
     </extensions>
 </phpunit>

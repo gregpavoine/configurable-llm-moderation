@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Domain;
+namespace Gsoi\CommentModeration\Domain;
 
 abstract class DomainException extends \DomainException
 {

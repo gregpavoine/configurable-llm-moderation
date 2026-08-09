@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\Infrastructure\Moderation;
+namespace Gsoi\CommentModeration\Infrastructure\Moderation;
 
-use Gsoi\Skeleton\Domain\Moderation\ModerationDecision;
-use Gsoi\Skeleton\Domain\Moderation\ModerationService;
+use Gsoi\CommentModeration\Domain\Moderation\ModerationDecision;
+use Gsoi\CommentModeration\Domain\Moderation\ModerationService;
 
 final class StubModerationService implements ModerationService
 {
