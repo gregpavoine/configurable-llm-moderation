@@ -37,6 +37,7 @@ return static function (Config $config): void {
             ->should(new HaveAttribute('Symfony\Component\Messenger\Attribute\AsMessageHandler'))
             ->because('application handlers must be registered explicitly'),
         Rule::allClasses()
+            ->except('Gsoi\Skeleton\Domain\DomainException')
             ->that(new HaveNameMatching('*Exception'))
             ->andThat(new ResideInOneOfTheseNamespaces('Gsoi\Skeleton\Domain'))
             ->should(new Extend('Gsoi\Skeleton\Domain\DomainException'))
