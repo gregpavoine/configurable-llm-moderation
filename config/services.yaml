@@ -17,3 +17,6 @@ services:
 
     Gsoi\Skeleton\:
         resource: '../src/'
+
+    Gsoi\Skeleton\Domain\Moderation\ModerationService:
+        alias: Gsoi\Skeleton\Infrastructure\Moderation\StubModerationService

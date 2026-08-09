@@ -10,3 +10,5 @@ framework:
                     multiplier: 2
                     max_delay: 10000
             failed: '%env(MESSENGER_FAILED_TRANSPORT_DSN)%'
+        routing:
+            Gsoi\Skeleton\Application\Command\ModerateComment\ModerateCommentCommand: async
