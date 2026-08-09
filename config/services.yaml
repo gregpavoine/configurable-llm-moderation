@@ -1,0 +1,19 @@
+parameters:
+    env(APP_ENV): ''
+    env(APP_NAME): 'skeleton'
+    env(REVISION): '1.0.0'
+    env(APP_SECRET): ''
+    env(DATABASE_URL): ''
+
+services:
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    _instanceof:
+        Symfony\Component\Serializer\SerializerAwareInterface:
+            calls:
+                - [ 'setSerializer', [ ] ]
+
+    Gsoi\Skeleton\:
+        resource: '../src/'

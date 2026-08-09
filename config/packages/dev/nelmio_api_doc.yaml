@@ -1,0 +1,18 @@
+nelmio_api_doc:
+    use_validation_groups: true
+    documentation:
+        info:
+            title: API Skeleton
+            description: API skeleton
+            version: '%env(resolve:REVISION)%'
+        servers:
+            -   url: http://localhost
+                description: Local
+    areas:
+        Health:
+            path_patterns:
+                - ^/health
+
+        default:
+            path_patterns:
+                - ^/(?!_(error|wdt|profiler)).*
