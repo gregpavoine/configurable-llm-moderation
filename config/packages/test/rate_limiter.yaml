@@ -1,0 +1,8 @@
+framework:
+    rate_limiter:
+        comment_submission_client:
+            policy: no_limit
+        comment_submission_global:
+            policy: no_limit
+        moderation_provider:
+            policy: no_limit

@@ -1,0 +1,16 @@
+framework:
+    rate_limiter:
+        comment_submission_client:
+            policy: fixed_window
+            limit: 20
+            interval: '1 minute'
+        comment_submission_global:
+            policy: fixed_window
+            limit: 200
+            interval: '1 minute'
+        moderation_provider:
+            policy: token_bucket
+            limit: 5
+            rate:
+                interval: '1 second'
+                amount: 2
