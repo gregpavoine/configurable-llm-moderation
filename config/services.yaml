@@ -1,9 +1,11 @@
 parameters:
     env(APP_ENV): ''
-    env(APP_NAME): 'skeleton'
+    env(APP_NAME): 'comment-moderation'
     env(REVISION): '1.0.0'
     env(APP_SECRET): ''
     env(DATABASE_URL): ''
+    env(FACEBOOK_APP_SECRET): ''
+    env(FACEBOOK_WEBHOOK_VERIFY_TOKEN): ''
 
 services:
     _defaults:
@@ -15,5 +17,31 @@ services:
             calls:
                 - [ 'setSerializer', [ ] ]
 
-    Gsoi\Skeleton\:
+    Gsoi\CommentModeration\:
         resource: '../src/'
+
+    Gsoi\CommentModeration\Infrastructure\Moderation\ModerationLlmConfig:
+        arguments:
+            $baseUrl: '%env(string:MODERATION_LLM_BASE_URL)%'
+            $model: '%env(string:MODERATION_LLM_MODEL)%'
+            $apiKey: '%env(string:MODERATION_LLM_API_KEY)%'
+            $timeout: '%env(float:MODERATION_LLM_TIMEOUT)%'
+
+    moderation.http_client:
+        class: Symfony\Contracts\HttpClient\HttpClientInterface
+        factory: [ 'Symfony\Component\HttpClient\HttpClient', 'create' ]
+
+    Gsoi\CommentModeration\Infrastructure\Moderation\OpenAiCompatibleModerationService:
+        arguments:
+            $httpClient: '@moderation.http_client'
+
+    Gsoi\CommentModeration\Infrastructure\Framework\Symfony\CommentSubmissionAdmissionListener:
+        arguments:
+            $clientLimiter: '@limiter.comment_submission_client'
+            $globalLimiter: '@limiter.comment_submission_global'
+
+    Gsoi\CommentModeration\Domain\Moderation\ModerationService:
+        alias: Gsoi\CommentModeration\Infrastructure\Moderation\OpenAiCompatibleModerationService
+
+    Gsoi\CommentModeration\Domain\Moderation\ModerationProviderStatusChecker:
+        alias: Gsoi\CommentModeration\Infrastructure\Moderation\OpenAiCompatibleModerationProviderStatusChecker

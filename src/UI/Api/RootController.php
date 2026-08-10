@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Gsoi\Skeleton\UI\Api;
+namespace Gsoi\CommentModeration\UI\Api;
 
 use OpenApi\Attributes as OA;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -22,7 +22,7 @@ final readonly class RootController
     public function __invoke(): JsonResponse
     {
         $data = [
-            'message' => 'API Skeleton.',
+            'message' => 'Comment Moderation API.',
             'version' => $this->revision,
         ];
 

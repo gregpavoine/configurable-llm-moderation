@@ -8,14 +8,11 @@ doctrine:
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
         mappings:
-            Gsoi\Skeleton:
+            Gsoi\CommentModeration:
                 is_bundle: false
                 type: attribute
                 dir: '%kernel.project_dir%/src'
-                prefix: 'Gsoi\Skeleton'
-        controller_resolver:
-            auto_mapping: false
-
+                prefix: 'Gsoi\CommentModeration'
 when@prod:
     doctrine:
         orm:

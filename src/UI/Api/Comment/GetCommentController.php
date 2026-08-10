@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Gsoi\CommentModeration\UI\Api\Comment;
+
+use Gsoi\CommentModeration\Application\Query\CommentView;
+use Gsoi\CommentModeration\Application\Query\GetComment\GetCommentQuery;
+use Gsoi\CommentModeration\UI\Api\HandleTrait;
+use Nelmio\ApiDocBundle\Attribute\Security as ApiSecurity;
+use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Routing\Attribute\Route;
+
+#[Route('/comments/{id}', methods: ['GET'])]
+#[ApiSecurity(name: 'Bearer')]
+#[OA\Tag(name: 'Comments')]
+final readonly class GetCommentController
+{
+    use HandleTrait;
+
+    public function __construct(private MessageBusInterface $messageBus)
+    {
+    }
+
+    #[OA\Response(response: 200, description: 'Comment detail.')]
+    #[OA\Response(response: 401, description: 'Authentication required.')]
+    #[OA\Response(response: 404, description: 'Comment not found.')]
+    public function __invoke(string $id): JsonResponse
+    {
+        $result = $this->handle($this->messageBus, new GetCommentQuery($id));
+        if (!$result instanceof CommentView) {
+            throw new \LogicException('Unexpected comment query result.');
+        }
+
+        return new JsonResponse($result->toArray());
+    }
+}
