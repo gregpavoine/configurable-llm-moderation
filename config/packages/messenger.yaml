@@ -1,0 +1,15 @@
+framework:
+    messenger:
+        failure_transport: failed
+        transports:
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                rate_limiter: moderation_provider
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 10000
+            failed: '%env(MESSENGER_FAILED_TRANSPORT_DSN)%'
+        routing:
+            Gsoi\CommentModeration\Application\Command\ModerateComment\ModerateCommentCommand: async
