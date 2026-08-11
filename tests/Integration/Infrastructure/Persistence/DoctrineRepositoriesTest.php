@@ -37,9 +37,10 @@ final class DoctrineRepositoriesTest extends KernelTestCase
         $repository->save($second);
 
         self::assertSame($first, $repository->get($first->id()));
-        self::assertSame([$second], $repository->search(null, ModerationStatus::Rejected, 10, 0));
-        self::assertSame([$first], $repository->search('publisher-a', null, 10, 0));
-        self::assertSame(1, $repository->count('publisher-a', null));
+        self::assertSame([$second], $repository->search(null, null, ModerationStatus::Rejected, 10, 0));
+        self::assertSame([$second], $repository->search(null, 'article-2', ModerationStatus::Rejected, 10, 0));
+        self::assertSame([$first], $repository->search('publisher-a', null, null, 10, 0));
+        self::assertSame(1, $repository->count('publisher-a', null, null));
     }
 
     public function testBannedUsersAreDetected(): void

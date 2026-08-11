@@ -11,6 +11,8 @@ final readonly class SearchCommentsQuery
     public function __construct(
         #[Assert\Length(max: 100)]
         public ?string $publisher = null,
+        #[Assert\Length(max: 255)]
+        public ?string $source = null,
         #[Assert\Choice(choices: ['pending', 'published', 'rejected'])]
         public ?string $status = null,
         #[Assert\Range(min: 1, max: 100)]

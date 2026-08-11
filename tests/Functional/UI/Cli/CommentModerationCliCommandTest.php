@@ -119,6 +119,30 @@ final class CommentModerationCliCommandTest extends KernelTestCase
         self::assertSame('manual_review_required', $payload['items'][1]['moderationReason'] ?? null);
     }
 
+    public function testItListsPublishedCommentsForOneArticle(): void
+    {
+        $application = new Application(self::bootKernel());
+        $this->createSchema();
+
+        $first = $this->addComment($application, 'article-cli', 'Published for CLI article.');
+        $second = $this->addComment($application, 'article-cli', 'Pending for CLI article.');
+        $third = $this->addComment($application, 'article-other', 'Published for another article.');
+
+        $manual = new CommandTester($application->find('app:comments:moderate'));
+        self::assertSame(0, $manual->execute(['id' => $first, '--status' => 'published', '--reason' => 'allowed']));
+        self::assertSame(0, $manual->execute(['id' => $third, '--status' => 'published', '--reason' => 'allowed']));
+
+        $list = new CommandTester($application->find('app:comments:list'));
+        self::assertSame(0, $list->execute(['--source' => 'article-cli', '--status' => 'published']));
+        $payload = $this->json($list);
+
+        self::assertSame(1, $payload['total'] ?? null);
+        self::assertSame($first, $payload['items'][0]['id'] ?? null);
+        self::assertSame('article-cli', $payload['items'][0]['source'] ?? null);
+        self::assertSame('published', $payload['items'][0]['status'] ?? null);
+        self::assertNotSame($second, $payload['items'][0]['id'] ?? null);
+    }
+
     private function createSchema(): void
     {
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
@@ -132,5 +156,19 @@ final class CommentModerationCliCommandTest extends KernelTestCase
         self::assertIsArray($payload);
 
         return $payload;
+    }
+
+    private function addComment(Application $application, string $source, string $body): string
+    {
+        $add = new CommandTester($application->find('app:comments:add'));
+        self::assertSame(0, $add->execute([
+            '--publisher' => 'cli-site',
+            '--source' => $source,
+            '--body' => $body,
+        ]));
+        $payload = $this->json($add);
+        self::assertIsString($payload['id'] ?? null);
+
+        return $payload['id'];
     }
 }

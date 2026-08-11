@@ -64,6 +64,33 @@ final class CommentReadControllerTest extends WebTestCase
         self::assertSame($rejected->id()->toString(), $payload['items'][0]['id'] ?? null);
     }
 
+    public function testPublishedCommentsCanBeFilteredByArticleSource(): void
+    {
+        $client = self::createClient();
+        $this->createSchema();
+        $published = Comment::submit('publisher-a', 'article-42', null, 'Published for this article.');
+        $published->publish('allowed');
+        $pending = Comment::submit('publisher-a', 'article-42', null, 'Pending for this article.');
+        $otherArticle = Comment::submit('publisher-a', 'article-99', null, 'Published elsewhere.');
+        $otherArticle->publish('allowed');
+        $this->persist($published, $pending, $otherArticle);
+
+        $client->request(
+            'GET',
+            '/comments?source=article-42&status=published',
+            server: $this->bearerHeader(),
+        );
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        self::assertSame(1, $payload['total'] ?? null);
+        self::assertCount(1, $payload['items'] ?? []);
+        self::assertSame($published->id()->toString(), $payload['items'][0]['id'] ?? null);
+        self::assertSame('article-42', $payload['items'][0]['source'] ?? null);
+        self::assertSame('published', $payload['items'][0]['status'] ?? null);
+    }
+
     public function testSearchPaginationIsReturnedInTheEnvelope(): void
     {
         $client = self::createClient();

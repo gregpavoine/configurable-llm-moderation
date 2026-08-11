@@ -148,12 +148,12 @@ final class ManuallyModeratedCommentRepository implements CommentRepository
         return $this->comment;
     }
 
-    public function search(?string $publisher, ?ModerationStatus $status, int $limit, int $offset): array
+    public function search(?string $publisher, ?string $source, ?ModerationStatus $status, int $limit, int $offset): array
     {
         return [];
     }
 
-    public function count(?string $publisher, ?ModerationStatus $status): int
+    public function count(?string $publisher, ?string $source, ?ModerationStatus $status): int
     {
         return 0;
     }

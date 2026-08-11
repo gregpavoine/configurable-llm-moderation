@@ -46,10 +46,10 @@ final readonly class DoctrineCommentRepository implements CommentRepository
         return $comment;
     }
 
-    public function search(?string $publisher, ?ModerationStatus $status, int $limit, int $offset): array
+    public function search(?string $publisher, ?string $source, ?ModerationStatus $status, int $limit, int $offset): array
     {
         /** @var list<Comment> $comments */
-        $comments = $this->filteredQuery($publisher, $status)
+        $comments = $this->filteredQuery($publisher, $source, $status)
             ->select('comment')
             ->orderBy('comment.createdAt', 'DESC')
             ->setMaxResults($limit)
@@ -60,10 +60,10 @@ final readonly class DoctrineCommentRepository implements CommentRepository
         return $comments;
     }
 
-    public function count(?string $publisher, ?ModerationStatus $status): int
+    public function count(?string $publisher, ?string $source, ?ModerationStatus $status): int
     {
         /** @var int|string $count */
-        $count = $this->filteredQuery($publisher, $status)
+        $count = $this->filteredQuery($publisher, $source, $status)
             ->select('COUNT(comment.id)')
             ->getQuery()
             ->getSingleScalarResult();
@@ -74,7 +74,7 @@ final readonly class DoctrineCommentRepository implements CommentRepository
     public function pendingForModeration(int $limit): array
     {
         /** @var list<Comment> $comments */
-        $comments = $this->filteredQuery(null, ModerationStatus::Pending)
+        $comments = $this->filteredQuery(null, null, ModerationStatus::Pending)
             ->select('comment')
             ->orderBy('comment.createdAt', 'ASC')
             ->setMaxResults($limit)
@@ -84,12 +84,16 @@ final readonly class DoctrineCommentRepository implements CommentRepository
         return $comments;
     }
 
-    private function filteredQuery(?string $publisher, ?ModerationStatus $status): QueryBuilder
+    private function filteredQuery(?string $publisher, ?string $source, ?ModerationStatus $status): QueryBuilder
     {
         $query = $this->entityManager->createQueryBuilder()->from(Comment::class, 'comment');
 
         if (null !== $publisher) {
             $query->andWhere('comment.publisher = :publisher')->setParameter('publisher', $publisher);
+        }
+
+        if (null !== $source) {
+            $query->andWhere('comment.source = :source')->setParameter('source', $source);
         }
 
         if (null !== $status) {

@@ -32,6 +32,7 @@ final readonly class SearchCommentsController
     {
         $result = $this->handle($this->messageBus, new SearchCommentsQuery(
             $params->publisher,
+            $params->source,
             $params->status,
             $params->limit,
             $params->offset,

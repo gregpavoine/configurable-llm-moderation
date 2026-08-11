@@ -324,6 +324,14 @@ docker compose --env-file .env.docker exec -T php php bin/console app:comments:l
 docker compose --env-file .env.docker exec -T php php bin/console app:comments:list --status=rejected --limit=10 --offset=0
 ```
 
+Lister les commentaires publiés liés à un article :
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:list \
+  --source=article-42 \
+  --status=published
+```
+
 Vérifier le statut d'un commentaire :
 
 ```bash
@@ -400,6 +408,14 @@ Réponse :
 ```
 
 Le champ `source` doit contenir l'identifiant de l'article, du post ou de la ressource métier. Le champ `publisher` doit identifier l'application, le site ou la page source. Cette séparation permet de modérer plusieurs articles dans une seule queue globale.
+
+Pour exposer les commentaires publiés d'un article à un système existant :
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer $moderator_jwt" \
+  "http://127.0.0.1:8000/comments?source=article-42&status=published"
+```
 
 Pour Facebook, le webhook crée la décision interne. L'application métier doit ensuite appliquer la décision côté Meta si nécessaire via Graph API. Cette partie dépend des permissions Meta du compte/page et n'est pas automatisée par ce micro-service.
 

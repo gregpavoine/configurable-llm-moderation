@@ -383,6 +383,7 @@ Lister avec filtres :
 ```bash
 docker compose --env-file .env.docker exec -T php php bin/console app:comments:list --status=pending
 docker compose --env-file .env.docker exec -T php php bin/console app:comments:list --publisher=facebook_page:page-42 --status=rejected
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:list --source=article-42 --status=published
 ```
 
 Lire le statut courant :

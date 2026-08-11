@@ -196,6 +196,14 @@ curl -fsS \
   "http://127.0.0.1:8000/comments?status=pending"
 ```
 
+Lister les commentaires publiés d'un article :
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer $moderator_jwt" \
+  "http://127.0.0.1:8000/comments?source=article-42&status=published"
+```
+
 Modérer manuellement :
 
 ```bash
@@ -225,6 +233,7 @@ Toutes les commandes renvoient du JSON exploitable.
 ```bash
 php bin/console app:comments:add
 php bin/console app:comments:list --status=pending
+php bin/console app:comments:list --source=article-42 --status=published
 php bin/console app:comments:status <comment-id>
 php bin/console app:comments:moderate <comment-id> --status=published --reason="validated"
 php bin/console app:comments:moderate-llm <comment-id>
@@ -498,6 +507,14 @@ curl -fsS \
   "http://127.0.0.1:8000/comments?status=pending"
 ```
 
+List published comments for one article:
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer $moderator_jwt" \
+  "http://127.0.0.1:8000/comments?source=article-42&status=published"
+```
+
 Manual moderation:
 
 ```bash
@@ -527,6 +544,7 @@ All commands return machine-readable JSON.
 ```bash
 php bin/console app:comments:add
 php bin/console app:comments:list --status=pending
+php bin/console app:comments:list --source=article-42 --status=published
 php bin/console app:comments:status <comment-id>
 php bin/console app:comments:moderate <comment-id> --status=published --reason="validated"
 php bin/console app:comments:moderate-llm <comment-id>

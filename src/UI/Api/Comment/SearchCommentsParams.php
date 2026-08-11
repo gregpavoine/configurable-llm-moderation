@@ -8,6 +8,7 @@ final readonly class SearchCommentsParams
 {
     public function __construct(
         public ?string $publisher = null,
+        public ?string $source = null,
         public ?string $status = null,
         public int $limit = 20,
         public int $offset = 0,

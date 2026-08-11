@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-#[AsCommand(name: 'app:comments:list', description: 'List comments with optional publisher and status filters.')]
+#[AsCommand(name: 'app:comments:list', description: 'List comments with optional publisher, source and status filters.')]
 final class ListCommentsCommand extends Command
 {
     use HandleTrait;
@@ -30,6 +30,7 @@ final class ListCommentsCommand extends Command
     {
         $this
             ->addOption('publisher', null, InputOption::VALUE_REQUIRED, 'Filter by publisher.')
+            ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Filter by source article or post identifier.')
             ->addOption('status', null, InputOption::VALUE_REQUIRED, 'Filter by status: pending, published, rejected.')
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximum number of comments.', '20')
             ->addOption('offset', null, InputOption::VALUE_REQUIRED, 'Pagination offset.', '0');
@@ -39,6 +40,7 @@ final class ListCommentsCommand extends Command
     {
         $result = $this->handle($this->messageBus, new SearchCommentsQuery(
             $this->nullableOption($input, 'publisher'),
+            $this->nullableOption($input, 'source'),
             $this->nullableOption($input, 'status'),
             $this->intOption($input, 'limit'),
             $this->intOption($input, 'offset'),

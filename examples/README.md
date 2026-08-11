@@ -184,6 +184,14 @@ Filtrer par publisher :
 docker compose --env-file .env.docker exec -T php php bin/console app:comments:list --publisher=site-a
 ```
 
+Filtrer les commentaires publiés liés à un article :
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:list \
+  --source=article-42 \
+  --status=published
+```
+
 Pagination :
 
 ```bash
@@ -431,6 +439,14 @@ Filtrer par publisher :
 curl -fsS \
   -H "Authorization: Bearer $moderator_jwt" \
   "$api_base_url/comments?publisher=site-a"
+```
+
+Filtrer les commentaires publiés liés à un article :
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer $moderator_jwt" \
+  "$api_base_url/comments?source=article-42&status=published"
 ```
 
 Pagination :
@@ -702,6 +718,7 @@ HTTP/1.1 401 Unauthorized
 | Ajouter un commentaire | `app:comments:add` | `POST /comments` |
 | Lister les commentaires | `app:comments:list` | `GET /comments` |
 | Filtrer par statut | `--status=` | `?status=` |
+| Filtrer par article/source | `--source=` | `?source=` |
 | Filtrer par publisher | `--publisher=` | `?publisher=` |
 | Paginer | `--limit= --offset=` | `?limit=&offset=` |
 | Voir un commentaire | `app:comments:status` | `GET /comments/{id}` |

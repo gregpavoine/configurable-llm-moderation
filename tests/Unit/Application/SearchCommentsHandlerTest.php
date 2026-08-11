@@ -28,15 +28,15 @@ final class SearchCommentsHandlerTest extends TestCase
         $repository = new RecordingSearchCommentRepository([$first, $second], 7);
         $handler = $this->handler($repository);
 
-        $result = $handler(new SearchCommentsQuery('publisher-a', 'rejected', 2, 4));
+        $result = $handler(new SearchCommentsQuery('publisher-a', 'article-2', 'rejected', 2, 4));
 
         self::assertSame(7, $result->total);
         self::assertSame(2, $result->limit);
         self::assertSame(4, $result->offset);
         self::assertSame([$first->id()->toString(), $second->id()->toString()], array_column($result->items, 'id'));
         self::assertSame(['rejected', 'rejected'], array_column($result->items, 'status'));
-        self::assertSame(['publisher-a', ModerationStatus::Rejected, 2, 4], $repository->searchArguments);
-        self::assertSame(['publisher-a', ModerationStatus::Rejected], $repository->countArguments);
+        self::assertSame(['publisher-a', 'article-2', ModerationStatus::Rejected, 2, 4], $repository->searchArguments);
+        self::assertSame(['publisher-a', 'article-2', ModerationStatus::Rejected], $repository->countArguments);
     }
 
     #[Test]
@@ -50,14 +50,15 @@ final class SearchCommentsHandlerTest extends TestCase
         self::assertSame(0, $result->total);
         self::assertSame(20, $result->limit);
         self::assertSame(0, $result->offset);
-        self::assertSame([null, null, 20, 0], $repository->searchArguments);
-        self::assertSame([null, null], $repository->countArguments);
+        self::assertSame([null, null, null, 20, 0], $repository->searchArguments);
+        self::assertSame([null, null, null], $repository->countArguments);
     }
 
     /** @return iterable<string, array{SearchCommentsQuery}> */
     public static function invalidQueries(): iterable
     {
         yield 'publisher too long' => [new SearchCommentsQuery(str_repeat('p', 101))];
+        yield 'source too long' => [new SearchCommentsQuery(source: str_repeat('s', 256))];
         yield 'unknown status' => [new SearchCommentsQuery(status: 'archived')];
         yield 'zero limit' => [new SearchCommentsQuery(limit: 0)];
         yield 'limit over maximum' => [new SearchCommentsQuery(limit: 101)];
@@ -84,10 +85,10 @@ final class SearchCommentsHandlerTest extends TestCase
 
 final class RecordingSearchCommentRepository implements CommentRepository
 {
-    /** @var null|array{?string, ?ModerationStatus, int, int} */
+    /** @var null|array{?string, ?string, ?ModerationStatus, int, int} */
     public ?array $searchArguments = null;
 
-    /** @var null|array{?string, ?ModerationStatus} */
+    /** @var null|array{?string, ?string, ?ModerationStatus} */
     public ?array $countArguments = null;
 
     /** @param list<Comment> $comments */
@@ -107,16 +108,16 @@ final class RecordingSearchCommentRepository implements CommentRepository
         throw new \LogicException('Unexpected get.');
     }
 
-    public function search(?string $publisher, ?ModerationStatus $status, int $limit, int $offset): array
+    public function search(?string $publisher, ?string $source, ?ModerationStatus $status, int $limit, int $offset): array
     {
-        $this->searchArguments = [$publisher, $status, $limit, $offset];
+        $this->searchArguments = [$publisher, $source, $status, $limit, $offset];
 
         return $this->comments;
     }
 
-    public function count(?string $publisher, ?ModerationStatus $status): int
+    public function count(?string $publisher, ?string $source, ?ModerationStatus $status): int
     {
-        $this->countArguments = [$publisher, $status];
+        $this->countArguments = [$publisher, $source, $status];
 
         return $this->total;
     }
@@ -139,12 +140,12 @@ final class FailingSearchCommentRepository implements CommentRepository
         throw new \LogicException('Repository must not be called.');
     }
 
-    public function search(?string $publisher, ?ModerationStatus $status, int $limit, int $offset): array
+    public function search(?string $publisher, ?string $source, ?ModerationStatus $status, int $limit, int $offset): array
     {
         throw new \LogicException('Repository must not be called.');
     }
 
-    public function count(?string $publisher, ?ModerationStatus $status): int
+    public function count(?string $publisher, ?string $source, ?ModerationStatus $status): int
     {
         throw new \LogicException('Repository must not be called.');
     }

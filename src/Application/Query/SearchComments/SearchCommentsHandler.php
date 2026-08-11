@@ -29,11 +29,11 @@ final readonly class SearchCommentsHandler
         }
 
         $status = null === $query->status ? null : ModerationStatus::from($query->status);
-        $comments = $this->comments->search($query->publisher, $status, $query->limit, $query->offset);
+        $comments = $this->comments->search($query->publisher, $query->source, $status, $query->limit, $query->offset);
 
         return new CommentSearchResult(
             array_map(CommentView::fromComment(...), $comments),
-            $this->comments->count($query->publisher, $status),
+            $this->comments->count($query->publisher, $query->source, $status),
             $query->limit,
             $query->offset,
         );

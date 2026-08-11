@@ -70,12 +70,12 @@ final readonly class FixedGetCommentRepository implements CommentRepository
         return $this->comment;
     }
 
-    public function search(?string $publisher, ?ModerationStatus $status, int $limit, int $offset): array
+    public function search(?string $publisher, ?string $source, ?ModerationStatus $status, int $limit, int $offset): array
     {
         throw new \LogicException('Unexpected search.');
     }
 
-    public function count(?string $publisher, ?ModerationStatus $status): int
+    public function count(?string $publisher, ?string $source, ?ModerationStatus $status): int
     {
         throw new \LogicException('Unexpected count.');
     }
@@ -98,12 +98,12 @@ final class FailingGetCommentRepository implements CommentRepository
         throw new \LogicException('Repository must not be called.');
     }
 
-    public function search(?string $publisher, ?ModerationStatus $status, int $limit, int $offset): array
+    public function search(?string $publisher, ?string $source, ?ModerationStatus $status, int $limit, int $offset): array
     {
         throw new \LogicException('Repository must not be called.');
     }
 
-    public function count(?string $publisher, ?ModerationStatus $status): int
+    public function count(?string $publisher, ?string $source, ?ModerationStatus $status): int
     {
         throw new \LogicException('Repository must not be called.');
     }
