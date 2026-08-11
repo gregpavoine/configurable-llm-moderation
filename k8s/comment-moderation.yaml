@@ -1,0 +1,365 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: comment-moderation
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: comment-moderation-config
+      namespace: comment-moderation
+    data:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      DATABASE_URL: sqlite:////app/var/data.db
+      MESSENGER_TRANSPORT_DSN: doctrine://default?queue_name=moderation
+      MESSENGER_FAILED_TRANSPORT_DSN: doctrine://default?queue_name=failed
+      JWT_SECRET_KEY: /app/config/jwt/private.pem
+      JWT_PUBLIC_KEY: /app/config/jwt/public.pem
+      MODERATION_LLM_BASE_URL: ""
+      MODERATION_LLM_MODEL: ""
+      MODERATION_LLM_TIMEOUT: "10"
+      FACEBOOK_WEBHOOK_VERIFY_TOKEN: replace-with-meta-verify-token
+
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: comment-moderation-secrets
+      namespace: comment-moderation
+    type: Opaque
+    stringData:
+      APP_SECRET: replace-with-strong-random-app-secret
+      JWT_PASSPHRASE: replace-with-managed-jwt-passphrase
+      MODERATION_LLM_API_KEY: replace-with-optional-llm-api-key
+      FACEBOOK_APP_SECRET: replace-with-meta-app-secret
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: comment-moderation-nginx
+      namespace: comment-moderation
+    data:
+      default.conf: |
+        server {
+            listen 8080;
+            server_name _;
+
+            root /app/public;
+            index index.php;
+            client_max_body_size 64k;
+
+            location / {
+                try_files $uri /index.php$is_args$args;
+            }
+
+            location ~ ^/index\.php(/|$) {
+                include fastcgi_params;
+                fastcgi_pass comment-moderation-php:9000;
+                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_param DOCUMENT_ROOT $document_root;
+                internal;
+            }
+
+            location ~ \.php$ {
+                return 404;
+            }
+
+            location ~ /\.(?!well-known/) {
+                deny all;
+            }
+        }
+
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: comment-moderation-data
+      namespace: comment-moderation
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: comment-moderation-jwt
+      namespace: comment-moderation
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 16Mi
+
+  - apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: comment-moderation-init
+      namespace: comment-moderation
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 33
+            runAsGroup: 33
+            fsGroup: 33
+          containers:
+            - name: init
+              image: comment-moderation-app:local
+              imagePullPolicy: IfNotPresent
+              command:
+                - /usr/local/bin/app-init
+              envFrom:
+                - configMapRef:
+                    name: comment-moderation-config
+                - secretRef:
+                    name: comment-moderation-secrets
+              volumeMounts:
+                - name: app-data
+                  mountPath: /app/var
+                - name: jwt-data
+                  mountPath: /app/config/jwt
+          volumes:
+            - name: app-data
+              persistentVolumeClaim:
+                claimName: comment-moderation-data
+            - name: jwt-data
+              persistentVolumeClaim:
+                claimName: comment-moderation-jwt
+
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: comment-moderation-php
+      namespace: comment-moderation
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: comment-moderation
+          component: php
+      template:
+        metadata:
+          labels:
+            app: comment-moderation
+            component: php
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 33
+            runAsGroup: 33
+            fsGroup: 33
+          containers:
+            - name: php
+              image: comment-moderation-app:local
+              imagePullPolicy: IfNotPresent
+              ports:
+                - name: fpm
+                  containerPort: 9000
+              envFrom:
+                - configMapRef:
+                    name: comment-moderation-config
+                - secretRef:
+                    name: comment-moderation-secrets
+              readinessProbe:
+                tcpSocket:
+                  port: 9000
+                initialDelaySeconds: 5
+                periodSeconds: 5
+              livenessProbe:
+                tcpSocket:
+                  port: 9000
+                initialDelaySeconds: 15
+                periodSeconds: 10
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              volumeMounts:
+                - name: app-data
+                  mountPath: /app/var
+                - name: jwt-data
+                  mountPath: /app/config/jwt
+          volumes:
+            - name: app-data
+              persistentVolumeClaim:
+                claimName: comment-moderation-data
+            - name: jwt-data
+              persistentVolumeClaim:
+                claimName: comment-moderation-jwt
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: comment-moderation-php
+      namespace: comment-moderation
+    spec:
+      type: ClusterIP
+      selector:
+        app: comment-moderation
+        component: php
+      ports:
+        - name: fpm
+          port: 9000
+          targetPort: 9000
+
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: comment-moderation-web
+      namespace: comment-moderation
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: comment-moderation
+          component: web
+      template:
+        metadata:
+          labels:
+            app: comment-moderation
+            component: web
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 101
+          containers:
+            - name: web
+              image: comment-moderation-web:local
+              imagePullPolicy: IfNotPresent
+              ports:
+                - name: http
+                  containerPort: 8080
+              readinessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 5
+                periodSeconds: 5
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 15
+                periodSeconds: 10
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 250m
+                  memory: 128Mi
+              volumeMounts:
+                - name: nginx-config
+                  mountPath: /etc/nginx/conf.d/default.conf
+                  subPath: default.conf
+          volumes:
+            - name: nginx-config
+              configMap:
+                name: comment-moderation-nginx
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: comment-moderation-web
+      namespace: comment-moderation
+    spec:
+      type: ClusterIP
+      selector:
+        app: comment-moderation
+        component: web
+      ports:
+        - name: http
+          port: 80
+          targetPort: 8080
+
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: comment-moderation-worker
+      namespace: comment-moderation
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: comment-moderation
+          component: worker
+      template:
+        metadata:
+          labels:
+            app: comment-moderation
+            component: worker
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 33
+            runAsGroup: 33
+            fsGroup: 33
+          containers:
+            - name: worker
+              image: comment-moderation-app:local
+              imagePullPolicy: IfNotPresent
+              command:
+                - php
+                - bin/console
+                - messenger:consume
+                - async
+                - --time-limit=3600
+                - --memory-limit=256M
+                - -vv
+              envFrom:
+                - configMapRef:
+                    name: comment-moderation-config
+                - secretRef:
+                    name: comment-moderation-secrets
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              volumeMounts:
+                - name: app-data
+                  mountPath: /app/var
+                - name: jwt-data
+                  mountPath: /app/config/jwt
+          volumes:
+            - name: app-data
+              persistentVolumeClaim:
+                claimName: comment-moderation-data
+            - name: jwt-data
+              persistentVolumeClaim:
+                claimName: comment-moderation-jwt
+
+  - apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: comment-moderation
+      namespace: comment-moderation
+      annotations:
+        nginx.ingress.kubernetes.io/proxy-body-size: 64k
+    spec:
+      rules:
+        - host: comment-moderation.local
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: comment-moderation-web
+                    port:
+                      number: 80
