@@ -38,6 +38,8 @@ final class ModerationLlmConfigTest extends TestCase
         yield 'ollama loopback http is allowed' => ['http://127.0.0.1:11434/v1/', 'qwen3:8b', '', true, 'http://127.0.0.1:11434/v1/chat/completions', null];
         yield 'the full IPv4 loopback range is allowed' => ['http://127.42.0.1:11434/v1/', 'model', '', true, 'http://127.42.0.1:11434/v1/chat/completions', null];
         yield 'localhost http is allowed' => [' http://localhost:11434/v1/ ', ' model ', ' ', true, 'http://localhost:11434/v1/chat/completions', null];
+        yield 'docker ollama service http is allowed' => ['http://ollama:11434/v1/', 'model', '', true, 'http://ollama:11434/v1/chat/completions', null];
+        yield 'docker host gateway http is allowed for LM Studio' => ['http://host.docker.internal:1234/v1/', 'model', '', true, 'http://host.docker.internal:1234/v1/chat/completions', null];
         yield 'ipv6 loopback http is allowed' => ['http://[::1]:11434/v1/', 'model', '', true, 'http://[::1]:11434/v1/chat/completions', null];
         yield 'external https is allowed' => ['https://api.example.com/v1', 'model', 'secret', true, 'https://api.example.com/v1/chat/completions', null];
         yield 'partial configuration is rejected' => ['https://api.example.com/v1', '', '', false, null, 'llm_misconfigured'];

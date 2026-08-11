@@ -70,7 +70,7 @@ final readonly class ModerationLlmConfig
 
         $scheme = strtolower($scheme);
         $normalizedHost = strtolower(trim($host, '[]'));
-        if ('https' !== $scheme && ('http' !== $scheme || !$this->isLoopback($normalizedHost))) {
+        if ('https' !== $scheme && ('http' !== $scheme || !$this->isTrustedLocalHttpHost($normalizedHost))) {
             $this->baseUrl = null;
             $this->endpoint = null;
             $this->providerHost = null;
@@ -123,6 +123,15 @@ final readonly class ModerationLlmConfig
     public function deferredReason(): ?string
     {
         return $this->deferredReason;
+    }
+
+    private function isTrustedLocalHttpHost(string $host): bool
+    {
+        if (in_array($host, ['ollama', 'host.docker.internal'], true)) {
+            return true;
+        }
+
+        return $this->isLoopback($host);
     }
 
     private function isLoopback(string $host): bool
