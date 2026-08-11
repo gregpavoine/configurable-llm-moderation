@@ -71,7 +71,7 @@ Endpoints locaux :
 
 - API : `http://127.0.0.1:8000`
 - Santé : `http://127.0.0.1:8000/health`
-- Documentation OpenAPI en dev : `http://127.0.0.1:8000/doc`
+- Documentation OpenAPI : `http://127.0.0.1:8000/doc/`
 - Ollama exposé côté hôte : `http://127.0.0.1:11435`
 
 Vérifier la santé :
@@ -217,7 +217,7 @@ Toutes les commandes renvoient du JSON exploitable.
 php bin/console app:comments:add
 php bin/console app:comments:list --status=pending
 php bin/console app:comments:status <comment-id>
-php bin/console app:comments:moderate <comment-id> published --reason="validated"
+php bin/console app:comments:moderate <comment-id> --status=published --reason="validated"
 php bin/console app:comments:moderate-llm <comment-id>
 php bin/console app:llm:status
 php bin/console app:llm:moderate "Texte à modérer"
@@ -363,7 +363,7 @@ Local endpoints:
 
 - API: `http://127.0.0.1:8000`
 - Health: `http://127.0.0.1:8000/health`
-- OpenAPI documentation in dev: `http://127.0.0.1:8000/doc`
+- OpenAPI documentation: `http://127.0.0.1:8000/doc/`
 - Ollama exposed on host: `http://127.0.0.1:11435`
 
 Health check:
@@ -509,7 +509,7 @@ All commands return machine-readable JSON.
 php bin/console app:comments:add
 php bin/console app:comments:list --status=pending
 php bin/console app:comments:status <comment-id>
-php bin/console app:comments:moderate <comment-id> published --reason="validated"
+php bin/console app:comments:moderate <comment-id> --status=published --reason="validated"
 php bin/console app:comments:moderate-llm <comment-id>
 php bin/console app:llm:status
 php bin/console app:llm:moderate "Text to moderate"

@@ -162,5 +162,5 @@ cat <<'EOF'
 Generate a local moderator token:
 docker compose --env-file .env.docker --profile tools run --rm token --subject=alice
 
-Complete test procedure: docs/TESTING.md
+Complete test procedure: examples/README.md
 EOF
