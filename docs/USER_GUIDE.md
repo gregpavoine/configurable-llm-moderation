@@ -99,6 +99,32 @@ Comportement attendu :
 - LLM configuré et réponse valide : le commentaire devient `published` ou `rejected`.
 - LLM absent, timeout, erreur HTTP ou réponse invalide : le commentaire reste `pending` avec `moderationReason=manual_review_required`.
 
+### Règles de modération envoyées au LLM
+
+Les règles métier sont chargées par Symfony depuis :
+
+```text
+config/packages/moderation.yaml
+```
+
+Exemple :
+
+```yaml
+parameters:
+    app.moderation.llm_rules:
+        - 'Reject abusive political insults, dehumanizing language, and comparisons to Nazi ideology when used as an insult against a person or public figure.'
+        - 'Reject direct harassment, personal attacks, threats, hate speech, discrimination, defamation, terrorism praise, and child sexual content.'
+        - 'Publish respectful disagreement, criticism, satire, and non-abusive political opinions.'
+```
+
+Pour modifier la politique de modération, éditez ce fichier puis relancez :
+
+```bash
+./launch.sh --no-build
+```
+
+Les règles sont ajoutées au prompt système envoyé au LLM. Elles ne remplacent pas les garde-fous de base : le service continue de refuser menaces, haine, harcèlement, diffamation, apologie terroriste et contenus sexuels impliquant des mineurs.
+
 ## 4. Configuration Facebook
 
 Dans `.env.docker`, configurer :

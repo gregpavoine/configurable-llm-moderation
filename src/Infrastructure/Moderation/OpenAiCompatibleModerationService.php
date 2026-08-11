@@ -24,6 +24,8 @@ PROMPT;
         private HttpClientInterface $httpClient,
         private LoggerInterface $logger,
         private ModerationLlmConfig $config,
+        /** @var list<string> */
+        private array $rules = [],
     ) {
     }
 
@@ -45,7 +47,7 @@ PROMPT;
                 'temperature' => 0,
                 'max_tokens' => 64,
                 'messages' => [
-                    ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
+                    ['role' => 'system', 'content' => $this->systemPrompt()],
                     ['role' => 'user', 'content' => $content],
                 ],
                 'response_format' => [
@@ -103,6 +105,20 @@ PROMPT;
             'published' => ModerationDecision::publish($decision['reason']),
             'rejected' => ModerationDecision::reject($decision['reason']),
         };
+    }
+
+    private function systemPrompt(): string
+    {
+        $rules = array_values(array_filter(array_map(
+            static fn (string $rule): string => trim($rule),
+            $this->rules,
+        )));
+
+        if ([] === $rules) {
+            return self::SYSTEM_PROMPT;
+        }
+
+        return self::SYSTEM_PROMPT."\n\nConfigured moderation rules:\n- ".implode("\n- ", $rules);
     }
 
     private function readBoundedBody(ResponseInterface $response): ?string

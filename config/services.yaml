@@ -34,6 +34,7 @@ services:
     Gsoi\CommentModeration\Infrastructure\Moderation\OpenAiCompatibleModerationService:
         arguments:
             $httpClient: '@moderation.http_client'
+            $rules: '%app.moderation.llm_rules%'
 
     Gsoi\CommentModeration\Infrastructure\Framework\Symfony\CommentSubmissionAdmissionListener:
         arguments:

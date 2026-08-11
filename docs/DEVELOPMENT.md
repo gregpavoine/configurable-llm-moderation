@@ -100,6 +100,19 @@ MODERATION_LLM_API_KEY=
 MODERATION_LLM_TIMEOUT=10
 ```
 
+Règles métier chargées par Symfony :
+
+```yaml
+# config/packages/moderation.yaml
+parameters:
+    app.moderation.llm_rules:
+        - 'Reject abusive political insults, dehumanizing language, and comparisons to Nazi ideology when used as an insult against a person or public figure.'
+        - 'Reject direct harassment, personal attacks, threats, hate speech, discrimination, defamation, terrorism praise, and child sexual content.'
+        - 'Publish respectful disagreement, criticism, satire, and non-abusive political opinions.'
+```
+
+Le paramètre `app.moderation.llm_rules` est injecté dans `OpenAiCompatibleModerationService`. Le service nettoie les entrées vides et ajoute les règles au prompt système sous la section `Configured moderation rules`.
+
 Règles :
 
 - base URL et model présents : appel fournisseur;

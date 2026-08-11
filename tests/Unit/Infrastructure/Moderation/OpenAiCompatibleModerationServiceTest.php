@@ -79,6 +79,32 @@ final class OpenAiCompatibleModerationServiceTest extends TestCase
     }
 
     #[Test]
+    public function itAddsConfiguredModerationRulesToTheSystemPrompt(): void
+    {
+        $client = new MockHttpClient(static function (string $method, string $url, array $options): MockResponse {
+            $body = json_decode($options['body'], true, 512, JSON_THROW_ON_ERROR);
+
+            self::assertStringContainsString('Configured moderation rules:', $body['messages'][0]['content']);
+            self::assertStringContainsString('- Reject Nazi comparisons used as direct insults.', $body['messages'][0]['content']);
+            self::assertStringContainsString('- Reject personal harassment against public figures.', $body['messages'][0]['content']);
+
+            return self::response('rejected', 'configured_rule');
+        });
+
+        $decision = $this->service(
+            $client,
+            $this->config(),
+            rules: [
+                'Reject Nazi comparisons used as direct insults.',
+                'Reject personal harassment against public figures.',
+            ],
+        )->moderate('MACRON tu es un nazi');
+
+        self::assertSame(ModerationStatus::Rejected, $decision->status);
+        self::assertSame('configured_rule', $decision->reason);
+    }
+
+    #[Test]
     public function itMapsARejectedProviderDecision(): void
     {
         $service = $this->service(
@@ -243,8 +269,9 @@ final class OpenAiCompatibleModerationServiceTest extends TestCase
         HttpClientInterface $client,
         ModerationLlmConfig $config,
         ?ModerationTestLogger $logger = null,
+        array $rules = [],
     ): OpenAiCompatibleModerationService {
-        return new OpenAiCompatibleModerationService($client, $logger ?? new ModerationTestLogger(), $config);
+        return new OpenAiCompatibleModerationService($client, $logger ?? new ModerationTestLogger(), $config, $rules);
     }
 
     private static function response(string $status, string $reason): MockResponse

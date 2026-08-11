@@ -123,6 +123,19 @@ FACEBOOK_WEBHOOK_VERIFY_TOKEN=token-partage-avec-meta
 FACEBOOK_APP_SECRET=secret-app-meta-hors-git
 ```
 
+Règles de modération envoyées au LLM :
+
+```yaml
+# config/packages/moderation.yaml
+parameters:
+    app.moderation.llm_rules:
+        - 'Reject abusive political insults, dehumanizing language, and comparisons to Nazi ideology when used as an insult against a person or public figure.'
+        - 'Reject direct harassment, personal attacks, threats, hate speech, discrimination, defamation, terrorism praise, and child sexual content.'
+        - 'Publish respectful disagreement, criticism, satire, and non-abusive political opinions.'
+```
+
+Modifier ce fichier puis redémarrer la stack pour que Symfony recharge la configuration.
+
 Ne versionnez jamais `.env.docker`, les clés JWT, les tokens, les passphrases ou les clés API.
 
 ### Tester l'API avec Docker
@@ -392,6 +405,19 @@ Facebook:
 FACEBOOK_WEBHOOK_VERIFY_TOKEN=shared-meta-token
 FACEBOOK_APP_SECRET=meta-app-secret-outside-git
 ```
+
+Moderation rules sent to the LLM:
+
+```yaml
+# config/packages/moderation.yaml
+parameters:
+    app.moderation.llm_rules:
+        - 'Reject abusive political insults, dehumanizing language, and comparisons to Nazi ideology when used as an insult against a person or public figure.'
+        - 'Reject direct harassment, personal attacks, threats, hate speech, discrimination, defamation, terrorism praise, and child sexual content.'
+        - 'Publish respectful disagreement, criticism, satire, and non-abusive political opinions.'
+```
+
+Update this file, then restart the stack so Symfony reloads the configuration.
 
 Never commit `.env.docker`, JWT keys, tokens, passphrases or API keys.
 
