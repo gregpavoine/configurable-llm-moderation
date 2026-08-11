@@ -51,7 +51,7 @@ Client ou Facebook
 
 Si aucun LLM n'est correctement renseigné, aucune décision automatique n'est inventée : le commentaire reste en `pending` pour modération manuelle.
 
-Les nouveaux commentaires sont mis en queue indépendamment de l'article. En cas de retard, l'opérateur peut relancer un batch global des plus anciens commentaires `pending` via `app:comments:moderate-batch` ou `POST /comments/moderation/batch`.
+Les nouveaux commentaires sont mis en queue indépendamment de l'article. En cas de retard ou de saturation du LLM, l'opérateur peut relancer un batch global des plus anciens commentaires `pending` via `app:comments:moderate-batch` ou `POST /comments/moderation/batch`. Les payloads HTTP sont bornés, les soumissions sont rate-limitées et le worker limite le débit envoyé au fournisseur LLM.
 
 ### Démarrage rapide avec Docker
 
@@ -346,7 +346,7 @@ Client or Facebook
 
 If no LLM is configured correctly, the system does not invent an automatic decision. The comment stays `pending` for manual moderation.
 
-New comments are queued independently of the article. If moderation falls behind, an operator can run a global batch over the oldest `pending` comments through `app:comments:moderate-batch` or `POST /comments/moderation/batch`.
+New comments are queued independently of the article. If moderation falls behind or the LLM saturates, an operator can run a global batch over the oldest `pending` comments through `app:comments:moderate-batch` or `POST /comments/moderation/batch`. HTTP payloads are bounded, submissions are rate-limited and the worker throttles traffic sent to the LLM provider.
 
 ### Quick start with Docker
 

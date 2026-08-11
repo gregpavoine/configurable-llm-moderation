@@ -709,10 +709,11 @@ HTTP/1.1 401 Unauthorized
 ## Notes importantes
 
 - `POST /comments` est public.
-- `GET /comments`, `GET /comments/{id}` et `POST /comments/{id}/moderation` nécessitent un JWT.
+- `GET /comments`, `GET /comments/{id}`, `POST /comments/{id}/moderation` et `POST /comments/moderation/batch` nécessitent un JWT.
 - La modération manuelle ne s'applique qu'aux commentaires `pending`.
 - Si le LLM est absent ou non fiable, le commentaire reste `pending`.
 - Si le LLM répond correctement, le worker passe le commentaire en `published` ou `rejected`.
 - La queue `new_comments` traite les nouveaux commentaires indépendamment de l'article.
 - Le batch traite les commentaires `pending` les plus anciens, tous articles confondus, avec une limite maximale de `100`.
+- En cas de flood, l'ingestion est protégée par des limites HTTP/applicatives et le worker ralentit les appels LLM via le limiter `moderation_provider`.
 - La décision Facebook est appliquée dans la base interne. Le système ne masque/supprime pas encore automatiquement le commentaire côté Facebook via Graph API.

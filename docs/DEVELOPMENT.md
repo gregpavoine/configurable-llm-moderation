@@ -445,6 +445,24 @@ Pour gérer les pics :
 
 Le batch API est volontairement protégé par `ROLE_MODERATOR`, borné à `100` éléments et synchrone. Pour des batchs massifs, privilégier plusieurs appels bornés ou un job dédié.
 
+Comportement attendu en cas de flood :
+
+- l'API accepte seulement les payloads valides et bornés;
+- les limites applicatives peuvent répondre `429` avant d'écrire en base;
+- les commentaires acceptés ne sont pas perdus : ils restent `pending`;
+- le worker consomme à un rythme contrôlé par le limiter `moderation_provider`;
+- si le LLM échoue ou renvoie une réponse invalide, la décision revient en fallback `pending` avec une raison de revue manuelle;
+- l'équipe d'exploitation peut relancer des lots bornés lorsque le provider redevient disponible.
+
+Points d'intégration à prévoir côté système appelant :
+
+- modèle métier avec un champ `moderation_comment_id`;
+- état métier compatible avec `pending`, `published` et `rejected`;
+- tâche de polling ou back-office lisant `GET /comments/{id}`;
+- stratégie de visibilité produit pour les commentaires `pending`;
+- supervision de la queue et alertes si trop de commentaires restent en attente;
+- mécanisme d'application de décision côté plateforme externe, par exemple masquer un commentaire Facebook rejeté via Graph API.
+
 ## 11. Collection Postman
 
 La collection importable est :

@@ -27,13 +27,25 @@ Accès :
 
 Chaque nouveau commentaire accepté est persisté en `pending`, puis un message `ModerateCommentCommand` est placé dans la queue Messenger `new_comments`. Cette queue est globale : elle ne dépend pas de l'article. Les commentaires de plusieurs articles, pages Facebook ou sources applicatives sont donc traités par ordre d'arrivée.
 
+Mode nominal :
+
+- un commentaire arrive via `POST /comments` ou via le webhook Facebook;
+- il est stocké immédiatement en `pending`;
+- il est ajouté à la queue `new_comments`;
+- le worker le modère dès que le LLM est disponible;
+- la décision devient `published`, `rejected` ou reste `pending` si une revue manuelle est nécessaire.
+
 Le batch sert à traiter un groupe de commentaires `pending` déjà en base, par exemple après une coupure du LLM, une maintenance ou un pic de trafic. Il prend les plus anciens commentaires `pending` tous articles confondus, avec une limite bornée entre `1` et `100`.
+
+Le batch n'est pas lié à un article. Si trois articles reçoivent des commentaires en même temps, le batch sélectionne les plus anciens `pending` dans toute la base.
 
 L'anti-flood repose sur trois barrières :
 
 - limite de taille HTTP avant parsing JSON;
 - rate limits applicatifs sur la soumission de commentaires;
 - throttling Messenger `moderation_provider` côté worker pour ne pas saturer le LLM.
+
+Si le volume de commentaires dépasse la capacité du LLM, le service ne bloque pas l'ingestion : les commentaires restent en `pending` dans la queue/base, puis sont traités progressivement. L'application appelante doit donc prévoir un état produit compatible avec `pending`, par exemple “en attente de validation” ou “visible seulement après validation”.
 
 ## 2. Démarrage Docker
 
@@ -359,6 +371,28 @@ Workflow recommandé :
 5. Si le statut devient `published`, publiez/maintenez le commentaire côté produit.
 6. Si le statut devient `rejected`, masquez, bloquez ou supprimez le commentaire côté produit selon votre règle métier.
 7. Si le statut reste `pending` avec `manual_review_required`, envoyez-le à une console opérateur et décidez via `POST /comments/{id}/moderation`.
+
+Contrat HTTP minimal :
+
+```http
+POST /comments
+Content-Type: application/json
+
+{
+  "publisher": "site-a",
+  "source": "article-42",
+  "authorId": "user-7",
+  "body": "Texte du commentaire"
+}
+```
+
+Réponse :
+
+```json
+{"id":"019ff02e-0113-763c-bb89-d393359af9fe","status":"pending"}
+```
+
+Le champ `source` doit contenir l'identifiant de l'article, du post ou de la ressource métier. Le champ `publisher` doit identifier l'application, le site ou la page source. Cette séparation permet de modérer plusieurs articles dans une seule queue globale.
 
 Pour Facebook, le webhook crée la décision interne. L'application métier doit ensuite appliquer la décision côté Meta si nécessaire via Graph API. Cette partie dépend des permissions Meta du compte/page et n'est pas automatisée par ce micro-service.
 
