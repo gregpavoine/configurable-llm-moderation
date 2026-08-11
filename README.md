@@ -1,23 +1,546 @@
-# Service de modération des commentaires
-API Symfony 8 / PHP 8.5 : `POST /comments` répond `202`, puis le worker modère asynchronement ; lectures et modération manuelle sont protégées.
-Les commentaires Facebook entrent par `GET/POST /webhooks/facebook/comments` : challenge Meta via `FACEBOOK_WEBHOOK_VERIFY_TOKEN`, callbacks signés `X-Hub-Signature-256` via `FACEBOOK_APP_SECRET`, puis mapping vers le même pipeline de modération.
-Sans LLM (`MODERATION_LLM_BASE_URL`, `MODERATION_LLM_MODEL` et `MODERATION_LLM_API_KEY` vides), le commentaire reste `pending`, avec `manual_review_required` et `moderatedAt: null`.
-Ollama local : `MODERATION_LLM_BASE_URL=http://127.0.0.1:11434/v1`, `MODERATION_LLM_MODEL=llama3.2` et une clé vide sont valides.
-Fournisseur externe OpenAI-compatible : `MODERATION_LLM_BASE_URL=https://api.openai.com/v1`, `MODERATION_LLM_MODEL=gpt-4o-mini`, `MODERATION_LLM_API_KEY=<secret>`.
-Réglez aussi `MODERATION_LLM_TIMEOUT=10`, installez avec `composer install`, puis appliquez `php bin/console doctrine:migrations:migrate --no-interaction`.
-Générez les clés JWT hors Git : `php bin/console lexik:jwt:generate-keypair --skip-if-exists`; émettez un jeton : `php bin/console app:jwt:issue-moderator --subject=alice`.
-Envoyez-le seulement dans `Authorization: Bearer <token>` ; les clés, passphrases et jetons ne doivent jamais être versionnés.
-Lancez le worker : `php bin/console messenger:consume async -vv`; l'endpoint opérateur est `POST /comments/{id}/moderation` avec `{"status":"published","reason":"optional"}` ; utilisez `"rejected"` pour refuser.
-Commandes CLI JSON : `app:comments:add`, `app:comments:list`, `app:comments:status`, `app:comments:moderate`, `app:comments:moderate-llm`, `app:llm:status` et `app:llm:moderate`.
-Les fournisseurs n'acceptent que HTTPS (ou HTTP loopback local), le client de modération contourne explicitement les proxies d'environnement, la réponse LLM est strictement validée, et tout échec bascule vers la revue manuelle.
-Les JWT RS256 expirent en 15 minutes ; déployez uniquement sous HTTPS et limitez l'accès aux opérateurs ayant `ROLE_MODERATOR`.
-En production, exportez explicitement `APP_ENV=prod`, `APP_DEBUG=0` et un `APP_SECRET` aléatoire fort ; le noyau refuse de démarrer en mode `prod` avec le debug actif. Bloquez aussi tout proxy HTTP sortant au niveau du déploiement. Si l'API est derrière un reverse proxy, ne déclarez comme proxies de confiance que ses adresses exactes : les limites par client utilisent `Request::getClientIp()`.
-`POST /comments` limite le corps brut à 65 536 octets, accepte au plus 20 requêtes par minute et par client et 200 globalement ; le worker limite également le débit vers le fournisseur. Ces valeurs sont des garde-fous locaux et doivent être complétées par les limites du reverse proxy/API gateway.
-Le champ public nullable `authorId` est un identifiant externe fourni par l'appelant, donc seulement exploitable comme signal de bannissement de bonne foi. Un bannissement opposable exige qu'un proxy amont authentifié signe ou injecte une identité vérifiée ; cette voie de confiance reste une évolution compatible proposée, pas une propriété de l'endpoint anonyme actuel.
-Stack Docker complète : lancez `./launch.sh` (`--no-build` pour réutiliser les images) ; API `http://127.0.0.1:8000`, Ollama `http://127.0.0.1:11435`.
-Déploiement Kubernetes exemple : `k8s/comment-moderation.yaml` avec `php`, `web`, `worker`, job d'init, ConfigMap, Secret et PVC.
-JWT local de test : `docker compose --env-file .env.docker --profile tools run --rm token --subject=alice` ; ce profil isolé contient les dépendances de développement, absentes de l'image applicative de production.
-État et logs : `docker compose --env-file .env.docker ps -a` et `docker compose --env-file .env.docker logs -f`; arrêt : `docker compose --env-file .env.docker down` (ajoutez `-v` uniquement pour effacer base, clés et modèle).
-Documentation OpenAPI : `/doc` en environnement `dev` uniquement ; vérification locale : `vendor/bin/phpunit && vendor/bin/phpstan analyse && vendor/bin/phparkitect check`.
-Documentation complète : `docs/USER_GUIDE.md` pour l'usage, l'exploitation et les tests; `docs/DEVELOPMENT.md` pour l'architecture, le développement, Docker, Kubernetes et les vérifications.
-Usage de l'IA : Codex a aidé à analyser, concevoir et générer code/tests ; les choix, corrections et vérifications finales ont été revus humainement.
+# Comment Moderation API
+
+![PHP](https://img.shields.io/badge/PHP-8.5-777bb4)
+![Symfony](https://img.shields.io/badge/Symfony-8-000000)
+![Tests](https://img.shields.io/badge/PHPUnit-131%20tests-brightgreen)
+![Architecture](https://img.shields.io/badge/Architecture-DDD%20%2B%20CQRS-blue)
+
+Service Symfony de modération asynchrone de commentaires, avec API REST, JWT opérateur, modération automatique par LLM OpenAI-compatible, fallback en revue manuelle, ingestion de commentaires Facebook, Docker Compose et manifests Kubernetes.
+
+English version is available below: [English documentation](#english-documentation).
+
+## Documentation française
+
+### Fonctionnalités
+
+- Soumission publique de commentaires via `POST /comments`.
+- Traitement asynchrone avec Symfony Messenger.
+- Modération automatique via LLM local ou externe compatible OpenAI.
+- Fallback sécurisé en `pending` si le LLM est absent, indisponible ou non fiable.
+- Modération manuelle protégée par JWT RS256.
+- Recherche et lecture des commentaires avec filtres par statut.
+- Webhook Facebook signé pour les commentaires d'articles/pages.
+- Commandes Symfony CLI pour exploiter et tester l'API.
+- Environnement Docker complet avec API, worker, Nginx, init et Ollama.
+- Manifests Kubernetes d'exemple.
+- Collection Postman incluse.
+
+### Stack technique
+
+- PHP 8.5
+- Symfony 8
+- Doctrine ORM et migrations
+- Symfony Messenger avec transport Doctrine
+- LexikJWTAuthenticationBundle
+- Symfony HttpClient
+- PHPUnit, PHPStan, PHPat
+- Docker Compose
+- Kubernetes YAML
+
+### Workflow de modération
+
+```text
+Client ou Facebook
+  -> API Symfony
+  -> Commentaire enregistré en pending
+  -> Message Messenger
+  -> Worker
+  -> LLM si configuré
+  -> published / rejected / pending manual_review_required
+```
+
+Si aucun LLM n'est correctement renseigné, aucune décision automatique n'est inventée : le commentaire reste en `pending` pour modération manuelle.
+
+### Démarrage rapide avec Docker
+
+Depuis la racine du projet :
+
+```bash
+./launch.sh
+```
+
+Le script prépare `.env.docker`, génère les secrets locaux nécessaires, construit les images, démarre les services, applique les migrations et attend que la stack soit prête.
+
+Pour redémarrer sans reconstruire :
+
+```bash
+./launch.sh --no-build
+```
+
+Endpoints locaux :
+
+- API : `http://127.0.0.1:8000`
+- Santé : `http://127.0.0.1:8000/health`
+- Documentation OpenAPI en dev : `http://127.0.0.1:8000/doc`
+- Ollama exposé côté hôte : `http://127.0.0.1:11435`
+
+Vérifier la santé :
+
+```bash
+curl -fsS http://127.0.0.1:8000/health
+```
+
+Résultat attendu :
+
+```json
+{"status":"ok"}
+```
+
+### Configuration
+
+Copier ou laisser `launch.sh` créer `.env.docker`, puis ajuster les variables selon le besoin.
+
+LLM local via Ollama :
+
+```dotenv
+MODERATION_LLM_BASE_URL=http://127.0.0.1:11434/v1
+MODERATION_LLM_MODEL=llama3.2
+MODERATION_LLM_API_KEY=
+MODERATION_LLM_TIMEOUT=30
+```
+
+LLM externe compatible OpenAI :
+
+```dotenv
+MODERATION_LLM_BASE_URL=https://api.example.com/v1
+MODERATION_LLM_MODEL=moderator-model
+MODERATION_LLM_API_KEY=votre-cle-secrete
+MODERATION_LLM_TIMEOUT=10
+```
+
+Mode revue manuelle uniquement :
+
+```dotenv
+MODERATION_LLM_BASE_URL=
+MODERATION_LLM_MODEL=
+MODERATION_LLM_API_KEY=
+```
+
+Facebook :
+
+```dotenv
+FACEBOOK_WEBHOOK_VERIFY_TOKEN=token-partage-avec-meta
+FACEBOOK_APP_SECRET=secret-app-meta-hors-git
+```
+
+Ne versionnez jamais `.env.docker`, les clés JWT, les tokens, les passphrases ou les clés API.
+
+### Tester l'API avec Docker
+
+Générer un JWT opérateur :
+
+```bash
+moderator_jwt=$(docker compose --env-file .env.docker --profile tools run --rm token --subject=alice)
+```
+
+Créer un commentaire :
+
+```bash
+submission=$(curl -fsS -X POST http://127.0.0.1:8000/comments \
+  -H 'Content-Type: application/json' \
+  --data '{"publisher":"site-a","source":"article-42","authorId":"user-7","body":"Merci pour cet article clair."}')
+
+echo "$submission"
+```
+
+Extraire l'identifiant :
+
+```bash
+comment_id=$(printf '%s' "$submission" | docker compose --env-file .env.docker exec -T php php -r '$p=json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR); echo $p["id"];')
+```
+
+Lire le commentaire :
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer $moderator_jwt" \
+  "http://127.0.0.1:8000/comments/$comment_id"
+```
+
+Lister par statut :
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer $moderator_jwt" \
+  "http://127.0.0.1:8000/comments?status=pending"
+```
+
+Modérer manuellement :
+
+```bash
+curl -fsS -X POST \
+  -H "Authorization: Bearer $moderator_jwt" \
+  -H 'Content-Type: application/json' \
+  --data '{"status":"published","reason":"validated manually"}' \
+  "http://127.0.0.1:8000/comments/$comment_id/moderation"
+```
+
+Tester le statut LLM :
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:llm:status
+```
+
+Forcer une modération LLM sur un commentaire existant :
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:moderate-llm "$comment_id"
+```
+
+### Commandes Symfony CLI
+
+Toutes les commandes renvoient du JSON exploitable.
+
+```bash
+php bin/console app:comments:add
+php bin/console app:comments:list --status=pending
+php bin/console app:comments:status <comment-id>
+php bin/console app:comments:moderate <comment-id> published --reason="validated"
+php bin/console app:comments:moderate-llm <comment-id>
+php bin/console app:llm:status
+php bin/console app:llm:moderate "Texte à modérer"
+php bin/console app:jwt:issue-moderator --subject=alice
+```
+
+Avec Docker, préfixer par :
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console
+```
+
+### Workflow Facebook
+
+Endpoints :
+
+- `GET /webhooks/facebook/comments` : challenge de vérification Meta.
+- `POST /webhooks/facebook/comments` : réception des événements signés.
+
+Le système vérifie `X-Hub-Signature-256`, mappe le commentaire Facebook vers le modèle interne, puis utilise le même pipeline de modération que `POST /comments`.
+
+Limite actuelle : la décision est appliquée dans notre système. Le service ne masque/supprime pas encore automatiquement le commentaire sur Facebook via Graph API.
+
+### Tests et qualité
+
+Vérifications locales :
+
+```bash
+composer validate --strict
+php bin/console lint:container
+php bin/console lint:yaml config/ k8s/
+vendor/bin/phpunit --display-deprecations
+vendor/bin/phpstan analyse --no-progress
+vendor/bin/phparkitect check
+docker compose --env-file .env.docker.example config --quiet
+docker compose --profile tools --env-file .env.docker.example config --quiet
+```
+
+Collection Postman :
+
+```text
+postman/comment-moderation.postman_collection.json
+```
+
+Guides complets :
+
+- [Documentation utilisateur](docs/USER_GUIDE.md)
+- [Documentation développeur](docs/DEVELOPMENT.md)
+
+### Sécurité
+
+- JWT RS256 avec expiration de 900 secondes.
+- Jetons acceptés uniquement via `Authorization: Bearer`.
+- Routes opérateur protégées par `ROLE_MODERATOR`.
+- LLM externe autorisé uniquement en HTTPS, sauf HTTP loopback local.
+- Timeouts, taille de corps et débit applicatif bornés.
+- Pas de log de clé API, token, prompt brut ou secret.
+- `.env.docker`, clés JWT et secrets locaux sont ignorés par Git.
+
+### Déploiement
+
+Docker Compose :
+
+```bash
+./launch.sh
+```
+
+Kubernetes :
+
+```bash
+kubectl apply -f k8s/comment-moderation.yaml
+```
+
+Avant production, remplacer les placeholders du Secret Kubernetes, utiliser TLS réel, une base durable adaptée et un secret manager.
+
+### Usage de l'IA
+
+Codex a aidé à analyser, structurer, générer et vérifier le code, les tests et la documentation. Les décisions d'architecture, corrections et validations finales restent explicitées dans le dépôt.
+
+---
+
+## English documentation
+
+Symfony service for asynchronous comment moderation, with a REST API, operator JWTs, automatic moderation through an OpenAI-compatible LLM, manual-review fallback, Facebook comment ingestion, Docker Compose and Kubernetes manifests.
+
+### Features
+
+- Public comment submission through `POST /comments`.
+- Asynchronous processing with Symfony Messenger.
+- Automatic moderation through a local or external OpenAI-compatible LLM.
+- Safe fallback to `pending` when the LLM is missing, unavailable or unreliable.
+- Manual moderation protected by RS256 JWT.
+- Comment search and read endpoints with status filters.
+- Signed Facebook webhook for article/page comments.
+- Symfony CLI commands for operations and tests.
+- Full Docker environment with API, worker, Nginx, init job and Ollama.
+- Example Kubernetes manifests.
+- Postman collection included.
+
+### Technical stack
+
+- PHP 8.5
+- Symfony 8
+- Doctrine ORM and migrations
+- Symfony Messenger with Doctrine transport
+- LexikJWTAuthenticationBundle
+- Symfony HttpClient
+- PHPUnit, PHPStan, PHPat
+- Docker Compose
+- Kubernetes YAML
+
+### Moderation workflow
+
+```text
+Client or Facebook
+  -> Symfony API
+  -> Comment stored as pending
+  -> Messenger message
+  -> Worker
+  -> LLM if configured
+  -> published / rejected / pending manual_review_required
+```
+
+If no LLM is configured correctly, the system does not invent an automatic decision. The comment stays `pending` for manual moderation.
+
+### Quick start with Docker
+
+From the project root:
+
+```bash
+./launch.sh
+```
+
+The script prepares `.env.docker`, generates required local secrets, builds images, starts services, runs migrations and waits until the stack is ready.
+
+Restart without rebuilding:
+
+```bash
+./launch.sh --no-build
+```
+
+Local endpoints:
+
+- API: `http://127.0.0.1:8000`
+- Health: `http://127.0.0.1:8000/health`
+- OpenAPI documentation in dev: `http://127.0.0.1:8000/doc`
+- Ollama exposed on host: `http://127.0.0.1:11435`
+
+Health check:
+
+```bash
+curl -fsS http://127.0.0.1:8000/health
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+### Configuration
+
+Let `launch.sh` create `.env.docker`, then adjust variables as needed.
+
+Local Ollama LLM:
+
+```dotenv
+MODERATION_LLM_BASE_URL=http://127.0.0.1:11434/v1
+MODERATION_LLM_MODEL=llama3.2
+MODERATION_LLM_API_KEY=
+MODERATION_LLM_TIMEOUT=30
+```
+
+External OpenAI-compatible LLM:
+
+```dotenv
+MODERATION_LLM_BASE_URL=https://api.example.com/v1
+MODERATION_LLM_MODEL=moderator-model
+MODERATION_LLM_API_KEY=your-secret-key
+MODERATION_LLM_TIMEOUT=10
+```
+
+Manual-review-only mode:
+
+```dotenv
+MODERATION_LLM_BASE_URL=
+MODERATION_LLM_MODEL=
+MODERATION_LLM_API_KEY=
+```
+
+Facebook:
+
+```dotenv
+FACEBOOK_WEBHOOK_VERIFY_TOKEN=shared-meta-token
+FACEBOOK_APP_SECRET=meta-app-secret-outside-git
+```
+
+Never commit `.env.docker`, JWT keys, tokens, passphrases or API keys.
+
+### Test the API with Docker
+
+Generate an operator JWT:
+
+```bash
+moderator_jwt=$(docker compose --env-file .env.docker --profile tools run --rm token --subject=alice)
+```
+
+Create a comment:
+
+```bash
+submission=$(curl -fsS -X POST http://127.0.0.1:8000/comments \
+  -H 'Content-Type: application/json' \
+  --data '{"publisher":"site-a","source":"article-42","authorId":"user-7","body":"Thanks for this clear article."}')
+
+echo "$submission"
+```
+
+Extract its identifier:
+
+```bash
+comment_id=$(printf '%s' "$submission" | docker compose --env-file .env.docker exec -T php php -r '$p=json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR); echo $p["id"];')
+```
+
+Read the comment:
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer $moderator_jwt" \
+  "http://127.0.0.1:8000/comments/$comment_id"
+```
+
+List by status:
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer $moderator_jwt" \
+  "http://127.0.0.1:8000/comments?status=pending"
+```
+
+Manual moderation:
+
+```bash
+curl -fsS -X POST \
+  -H "Authorization: Bearer $moderator_jwt" \
+  -H 'Content-Type: application/json' \
+  --data '{"status":"published","reason":"validated manually"}' \
+  "http://127.0.0.1:8000/comments/$comment_id/moderation"
+```
+
+Check LLM status:
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:llm:status
+```
+
+Force LLM moderation on an existing comment:
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:moderate-llm "$comment_id"
+```
+
+### Symfony CLI commands
+
+All commands return machine-readable JSON.
+
+```bash
+php bin/console app:comments:add
+php bin/console app:comments:list --status=pending
+php bin/console app:comments:status <comment-id>
+php bin/console app:comments:moderate <comment-id> published --reason="validated"
+php bin/console app:comments:moderate-llm <comment-id>
+php bin/console app:llm:status
+php bin/console app:llm:moderate "Text to moderate"
+php bin/console app:jwt:issue-moderator --subject=alice
+```
+
+With Docker, prefix commands with:
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console
+```
+
+### Facebook workflow
+
+Endpoints:
+
+- `GET /webhooks/facebook/comments`: Meta verification challenge.
+- `POST /webhooks/facebook/comments`: signed event ingestion.
+
+The system verifies `X-Hub-Signature-256`, maps the Facebook comment to the internal model, then sends it through the same moderation pipeline as `POST /comments`.
+
+Current limitation: the decision is applied inside this system only. The service does not yet hide/delete comments on Facebook through Graph API.
+
+### Tests and quality
+
+Local checks:
+
+```bash
+composer validate --strict
+php bin/console lint:container
+php bin/console lint:yaml config/ k8s/
+vendor/bin/phpunit --display-deprecations
+vendor/bin/phpstan analyse --no-progress
+vendor/bin/phparkitect check
+docker compose --env-file .env.docker.example config --quiet
+docker compose --profile tools --env-file .env.docker.example config --quiet
+```
+
+Postman collection:
+
+```text
+postman/comment-moderation.postman_collection.json
+```
+
+Full guides:
+
+- [User guide](docs/USER_GUIDE.md)
+- [Developer guide](docs/DEVELOPMENT.md)
+
+### Security
+
+- RS256 JWTs with a 900-second TTL.
+- Tokens accepted only through `Authorization: Bearer`.
+- Operator routes protected by `ROLE_MODERATOR`.
+- External LLM URLs must use HTTPS, except local loopback HTTP.
+- Request body size, timeouts and application throughput are bounded.
+- API keys, tokens, raw prompts and secrets are not logged.
+- `.env.docker`, JWT keys and local secrets are ignored by Git.
+
+### Deployment
+
+Docker Compose:
+
+```bash
+./launch.sh
+```
+
+Kubernetes:
+
+```bash
+kubectl apply -f k8s/comment-moderation.yaml
+```
+
+Before production, replace Kubernetes Secret placeholders, use real TLS, a durable database and a secret manager.
+
+### AI usage
+
+Codex helped analyze, structure, generate and verify code, tests and documentation. Architecture choices, fixes and final validations are explicitly represented in the repository.
