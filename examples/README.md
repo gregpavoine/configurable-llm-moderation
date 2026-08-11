@@ -118,7 +118,7 @@ Les règles métier envoyées au LLM sont dans :
 config/packages/moderation.yaml
 ```
 
-## Section CLI
+## Utilisation CLI
 
 Toutes les commandes CLI ci-dessous s'exécutent dans le conteneur `php` et renvoient du JSON.
 
@@ -341,7 +341,7 @@ docker compose --env-file .env.docker exec -T php php bin/console app:comments:l
   --publisher=facebook_page:page-123
 ```
 
-## Section API
+## Utilisation API
 
 Les exemples API utilisent `curl` depuis la machine hôte.
 
