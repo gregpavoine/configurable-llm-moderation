@@ -23,12 +23,17 @@
 **/Dockerfile
 **/Thumbs.db
 .github/
+.idea/
+.phpunit.cache/
+.worktrees/
+config/jwt/*.pem
 docs/
 public/bundles/
 var/
 vendor/
 .editorconfig
 .env.*.local
+.env.docker
 .env.local
 .env.local.php
 .env.test
