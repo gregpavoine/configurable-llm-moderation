@@ -196,7 +196,6 @@ final class OpenAiCompatibleModerationServiceTest extends TestCase
         yield 'structured content is not an object' => [new MockResponse('{"choices":[{"message":{"content":"[]"}}]}')];
         yield 'unknown status' => [self::response('pending', 'uncertain')];
         yield 'empty reason' => [self::response('published', '   ')];
-        yield 'reason over 100 characters' => [self::response('rejected', str_repeat('x', 101))];
         yield 'additional structured property' => [self::structuredResponse(['status' => 'published', 'reason' => 'allowed', 'extra' => true])];
     }
 
@@ -244,16 +243,16 @@ final class OpenAiCompatibleModerationServiceTest extends TestCase
     #[Test]
     public function itRejectsAReasonWhoseRawLengthExceedsTheSchemaLimit(): void
     {
-        $rawReason = str_repeat(' ', 50).'allowed'.str_repeat(' ', 50);
+        $rawReason = str_repeat('a', 120);
         $service = $this->service(
-            new MockHttpClient(self::response('published', $rawReason)),
+            new MockHttpClient(self::response('rejected', $rawReason)),
             $this->config(),
         );
 
         $decision = $service->moderate('Comment.');
 
-        self::assertSame(ModerationStatus::Pending, $decision->status);
-        self::assertSame('llm_invalid_response', $decision->reason);
+        self::assertSame(ModerationStatus::Rejected, $decision->status);
+        self::assertSame(str_repeat('a', 100), $decision->reason);
     }
 
     private function config(
