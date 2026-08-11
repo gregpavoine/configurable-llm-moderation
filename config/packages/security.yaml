@@ -21,5 +21,6 @@ security:
         - { path: ^/doc, roles: PUBLIC_ACCESS }
         - { path: ^/webhooks/facebook/comments$, roles: PUBLIC_ACCESS, methods: [GET, HEAD, POST] }
         - { path: ^/comments$, roles: PUBLIC_ACCESS, methods: [POST] }
+        - { path: ^/comments/moderation/batch$, roles: ROLE_MODERATOR, methods: [POST] }
         - { path: ^/comments/.+/moderation$, roles: ROLE_MODERATOR, methods: [POST] }
         - { path: ^/comments, roles: IS_AUTHENTICATED_FULLY, methods: [GET, HEAD] }

@@ -29,6 +29,7 @@ Le projet suit une séparation DDD/CQRS légère.
 `src/Application` :
 
 - commandes `SubmitComment`, `ModerateComment`, `ManuallyModerateComment`;
+- commande `ModeratePendingCommentsBatch` pour retraiter un lot global de commentaires `pending`;
 - queries `GetComment`, `SearchComments`;
 - handlers applicatifs;
 - vues de sortie `CommentView`, `CommentSearchResult`.
@@ -57,7 +58,7 @@ POST /comments
   -> SubmitCommentCommand
   -> rejet immediat si auteur banni
   -> persistance pending
-  -> dispatch ModerateCommentCommand
+  -> dispatch ModerateCommentCommand vers la queue new_comments
   -> worker Messenger
   -> ModerationService
   -> published, rejected ou pending/manual_review_required
@@ -84,6 +85,17 @@ POST /comments/{id}/moderation
 ```
 
 Un commentaire final est immuable. Les conflits de transition remontent en `409`.
+
+Batch opérateur :
+
+```text
+POST /comments/moderation/batch ou app:comments:moderate-batch
+  -> JWT ROLE_MODERATOR pour l'API
+  -> ModeratePendingCommentsBatchCommand
+  -> lecture des plus anciens commentaires pending, tous articles confondus
+  -> ModerateCommentProcessor pour chaque commentaire
+  -> retour JSON avec processed, limit et items
+```
 
 ## 4. Modération LLM
 
@@ -204,7 +216,7 @@ Services :
 - `init` : génère les clés JWT si absentes, lance migrations, valide le schéma, clear cache;
 - `php` : PHP-FPM Symfony;
 - `web` : Nginx;
-- `worker` : `messenger:consume async`;
+- `worker` : `messenger:consume new_comments async`;
 - `ollama` : serveur LLM local;
 - `ollama-init` : téléchargement du modèle;
 - `token` : profil tools pour émettre un JWT local.
@@ -397,12 +409,41 @@ Relancer la modération LLM d'un commentaire existant, de façon synchronisée :
 docker compose --env-file .env.docker exec -T php php bin/console app:comments:moderate-llm <comment-id>
 ```
 
+Modérer un lot global de commentaires `pending` :
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:moderate-batch --limit=20
+```
+
 Implémentation :
 
 - `src/UI/Cli/*Command.php` formate les entrées/sorties console;
 - les commandes dispatchent des Commands/Queries applicatives via Messenger;
 - `ModerateCommentProcessor` porte la logique commune entre worker async et commande CLI synchronisée;
+- `ModeratePendingCommentsBatchHandler` réutilise le même processor et ne duplique pas la logique de décision;
 - `ModerationProviderStatusChecker` expose un port domaine pour le check de fournisseur LLM.
+
+## 10.1 Intégration micro-service
+
+Contrat d'intégration minimal :
+
+- le système appelant envoie chaque nouveau commentaire à `POST /comments`;
+- il conserve l'`id` retourné pour corréler la décision avec son commentaire métier;
+- il lit la décision avec `GET /comments/{id}` ou `GET /comments?status=...`;
+- il applique localement la décision `published` ou `rejected`;
+- il garde une file de revue humaine pour les commentaires encore `pending`.
+
+Le micro-service ne doit pas être couplé à un article unique : `publisher` identifie le système source, `source` identifie l'article/post/page, et la queue `new_comments` traite tous les commentaires entrants globalement.
+
+Pour gérer les pics :
+
+- augmenter le nombre de replicas `worker` si le fournisseur LLM accepte le débit;
+- conserver le rate limiter `moderation_provider` pour protéger le provider;
+- traiter les retards avec `app:comments:moderate-batch --limit=N` ou `POST /comments/moderation/batch`;
+- surveiller le nombre de commentaires `pending` et la table Messenger Doctrine;
+- dimensionner le fournisseur LLM avant d'augmenter le débit worker.
+
+Le batch API est volontairement protégé par `ROLE_MODERATOR`, borné à `100` éléments et synchrone. Pour des batchs massifs, privilégier plusieurs appels bornés ou un job dédié.
 
 ## 11. Collection Postman
 

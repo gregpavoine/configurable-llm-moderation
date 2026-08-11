@@ -36,7 +36,7 @@ final class KubernetesManifestTest extends TestCase
 
         self::assertSame('comment-moderation-app:local', $this->container($php, 'php')['image']);
         self::assertSame('comment-moderation-web:local', $this->container($web, 'web')['image']);
-        self::assertSame(['php', 'bin/console', 'messenger:consume', 'async', '--time-limit=3600', '--memory-limit=256M', '-vv'], $this->container($worker, 'worker')['command']);
+        self::assertSame(['php', 'bin/console', 'messenger:consume', 'new_comments', 'async', '--time-limit=3600', '--memory-limit=256M', '-vv'], $this->container($worker, 'worker')['command']);
         self::assertSame(['/usr/local/bin/app-init'], $this->container($init, 'init')['command']);
 
         self::assertSame('/health', $this->container($web, 'web')['readinessProbe']['httpGet']['path']);
@@ -50,6 +50,7 @@ final class KubernetesManifestTest extends TestCase
         $configMap = $this->resource('ConfigMap', 'comment-moderation-config');
         self::assertSame('prod', $configMap['data']['APP_ENV']);
         self::assertSame('0', $configMap['data']['APP_DEBUG']);
+        self::assertSame('doctrine://default?queue_name=new_comments', $configMap['data']['MESSENGER_NEW_COMMENTS_TRANSPORT_DSN']);
         self::assertSame('10', $configMap['data']['MODERATION_LLM_TIMEOUT']);
         self::assertArrayHasKey('FACEBOOK_WEBHOOK_VERIFY_TOKEN', $configMap['data']);
 

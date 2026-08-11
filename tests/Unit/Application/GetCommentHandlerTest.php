@@ -79,6 +79,11 @@ final readonly class FixedGetCommentRepository implements CommentRepository
     {
         throw new \LogicException('Unexpected count.');
     }
+
+    public function pendingForModeration(int $limit): array
+    {
+        throw new \LogicException('Unexpected pending moderation lookup.');
+    }
 }
 
 final class FailingGetCommentRepository implements CommentRepository
@@ -99,6 +104,11 @@ final class FailingGetCommentRepository implements CommentRepository
     }
 
     public function count(?string $publisher, ?ModerationStatus $status): int
+    {
+        throw new \LogicException('Repository must not be called.');
+    }
+
+    public function pendingForModeration(int $limit): array
     {
         throw new \LogicException('Repository must not be called.');
     }

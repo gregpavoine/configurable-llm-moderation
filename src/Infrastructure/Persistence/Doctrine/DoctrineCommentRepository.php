@@ -71,6 +71,19 @@ final readonly class DoctrineCommentRepository implements CommentRepository
         return (int) $count;
     }
 
+    public function pendingForModeration(int $limit): array
+    {
+        /** @var list<Comment> $comments */
+        $comments = $this->filteredQuery(null, ModerationStatus::Pending)
+            ->select('comment')
+            ->orderBy('comment.createdAt', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        return $comments;
+    }
+
     private function filteredQuery(?string $publisher, ?ModerationStatus $status): QueryBuilder
     {
         $query = $this->entityManager->createQueryBuilder()->from(Comment::class, 'comment');

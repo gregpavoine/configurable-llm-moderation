@@ -119,6 +119,18 @@ final class InMemoryCommentRepository implements CommentRepository
     {
         return 0;
     }
+
+    public function pendingForModeration(int $limit): array
+    {
+        return array_slice(
+            array_values(array_filter(
+                $this->comments,
+                static fn (Comment $comment): bool => $comment->isPending(),
+            )),
+            0,
+            $limit,
+        );
+    }
 }
 
 final readonly class FixedBannedUserRepository implements BannedUserRepository

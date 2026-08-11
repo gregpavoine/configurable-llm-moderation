@@ -43,13 +43,15 @@ English version is available below: [English documentation](#english-documentati
 Client ou Facebook
   -> API Symfony
   -> Commentaire enregistré en pending
-  -> Message Messenger
+  -> Message Messenger queue new_comments
   -> Worker
   -> LLM si configuré
   -> published / rejected / pending manual_review_required
 ```
 
 Si aucun LLM n'est correctement renseigné, aucune décision automatique n'est inventée : le commentaire reste en `pending` pour modération manuelle.
+
+Les nouveaux commentaires sont mis en queue indépendamment de l'article. En cas de retard, l'opérateur peut relancer un batch global des plus anciens commentaires `pending` via `app:comments:moderate-batch` ou `POST /comments/moderation/batch`.
 
 ### Démarrage rapide avec Docker
 
@@ -219,6 +221,7 @@ php bin/console app:comments:list --status=pending
 php bin/console app:comments:status <comment-id>
 php bin/console app:comments:moderate <comment-id> --status=published --reason="validated"
 php bin/console app:comments:moderate-llm <comment-id>
+php bin/console app:comments:moderate-batch --limit=20
 php bin/console app:llm:status
 php bin/console app:llm:moderate "Texte à modérer"
 php bin/console app:jwt:issue-moderator --subject=alice
@@ -335,13 +338,15 @@ Symfony service for asynchronous comment moderation, with a REST API, operator J
 Client or Facebook
   -> Symfony API
   -> Comment stored as pending
-  -> Messenger message
+  -> Messenger message on the new_comments queue
   -> Worker
   -> LLM if configured
   -> published / rejected / pending manual_review_required
 ```
 
 If no LLM is configured correctly, the system does not invent an automatic decision. The comment stays `pending` for manual moderation.
+
+New comments are queued independently of the article. If moderation falls behind, an operator can run a global batch over the oldest `pending` comments through `app:comments:moderate-batch` or `POST /comments/moderation/batch`.
 
 ### Quick start with Docker
 
@@ -511,6 +516,7 @@ php bin/console app:comments:list --status=pending
 php bin/console app:comments:status <comment-id>
 php bin/console app:comments:moderate <comment-id> --status=published --reason="validated"
 php bin/console app:comments:moderate-llm <comment-id>
+php bin/console app:comments:moderate-batch --limit=20
 php bin/console app:llm:status
 php bin/console app:llm:moderate "Text to moderate"
 php bin/console app:jwt:issue-moderator --subject=alice

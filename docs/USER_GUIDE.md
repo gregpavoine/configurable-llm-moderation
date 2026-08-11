@@ -20,8 +20,20 @@ Sources possibles :
 Accès :
 
 - `POST /comments` est public.
-- `GET /comments`, `GET /comments/{id}` et `POST /comments/{id}/moderation` exigent un JWT opérateur.
+- `GET /comments`, `GET /comments/{id}`, `POST /comments/{id}/moderation` et `POST /comments/moderation/batch` exigent un JWT opérateur.
 - `GET/POST /webhooks/facebook/comments` est public au sens HTTP, mais sécurisé par token de vérification Meta et signature HMAC.
+
+## 1.1 Queue, batch et anti-flood
+
+Chaque nouveau commentaire accepté est persisté en `pending`, puis un message `ModerateCommentCommand` est placé dans la queue Messenger `new_comments`. Cette queue est globale : elle ne dépend pas de l'article. Les commentaires de plusieurs articles, pages Facebook ou sources applicatives sont donc traités par ordre d'arrivée.
+
+Le batch sert à traiter un groupe de commentaires `pending` déjà en base, par exemple après une coupure du LLM, une maintenance ou un pic de trafic. Il prend les plus anciens commentaires `pending` tous articles confondus, avec une limite bornée entre `1` et `100`.
+
+L'anti-flood repose sur trois barrières :
+
+- limite de taille HTTP avant parsing JSON;
+- rate limits applicatifs sur la soumission de commentaires;
+- throttling Messenger `moderation_provider` côté worker pour ne pas saturer le LLM.
 
 ## 2. Démarrage Docker
 
@@ -326,7 +338,37 @@ Lancer une modération LLM synchronisée sur un commentaire existant :
 docker compose --env-file .env.docker exec -T php php bin/console app:comments:moderate-llm <comment-id>
 ```
 
+Modérer un batch de commentaires `pending`, tous articles confondus :
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:moderate-batch --limit=20
+```
+
 Toutes ces commandes retournent du JSON pour être facilement exploitables dans un script.
+
+## 9.1 Intégrer ce micro-service dans un système existant
+
+Le système existant doit traiter ce service comme un composant de décision externe.
+
+Workflow recommandé :
+
+1. Quand un utilisateur publie un commentaire dans votre application, appelez `POST /comments` avec `publisher`, `source`, `authorId` si disponible, et `body`.
+2. Stockez l'identifiant retourné par le micro-service dans votre base métier.
+3. Affichez le commentaire côté produit seulement si votre politique accepte l'état `pending`, sinon attendez `published`.
+4. Récupérez la décision par polling `GET /comments/{id}` ou par liste filtrée `GET /comments?status=rejected`.
+5. Si le statut devient `published`, publiez/maintenez le commentaire côté produit.
+6. Si le statut devient `rejected`, masquez, bloquez ou supprimez le commentaire côté produit selon votre règle métier.
+7. Si le statut reste `pending` avec `manual_review_required`, envoyez-le à une console opérateur et décidez via `POST /comments/{id}/moderation`.
+
+Pour Facebook, le webhook crée la décision interne. L'application métier doit ensuite appliquer la décision côté Meta si nécessaire via Graph API. Cette partie dépend des permissions Meta du compte/page et n'est pas automatisée par ce micro-service.
+
+En production, placez le service derrière votre API gateway ou reverse proxy :
+
+- HTTPS obligatoire;
+- JWT modérateur réservé aux back-offices et jobs internes;
+- secrets dans un secret manager;
+- métriques sur `pending`, `rejected`, `published`, profondeur de queue et temps de réponse LLM;
+- scaling horizontal possible du worker si le LLM/provider supporte la charge.
 
 ## 10. Tester le webhook Facebook en local
 

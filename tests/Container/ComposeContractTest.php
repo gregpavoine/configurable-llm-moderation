@@ -54,6 +54,7 @@ final class ComposeContractTest extends TestCase
         self::assertSame('http://ollama:11434/v1', $services['worker']['environment']['MODERATION_LLM_BASE_URL']);
         self::assertSame('gpt-oss-safeguard:20b', $services['worker']['environment']['MODERATION_LLM_MODEL']);
         self::assertSame('', $services['worker']['environment']['MODERATION_LLM_API_KEY']);
+        self::assertSame('doctrine://default?queue_name=new_comments', $services['worker']['environment']['MESSENGER_NEW_COMMENTS_TRANSPORT_DSN']);
         self::assertSame('http://ollama:11434/v1', $services['php']['environment']['MODERATION_LLM_BASE_URL']);
         self::assertSame('gpt-oss-safeguard:20b', $services['php']['environment']['MODERATION_LLM_MODEL']);
         self::assertSame('', $services['worker']['environment']['JWT_PASSPHRASE']);
@@ -64,6 +65,7 @@ final class ComposeContractTest extends TestCase
         self::assertSame('service_completed_successfully', $services['worker']['depends_on']['init']['condition']);
         self::assertSame('service_completed_successfully', $services['worker']['depends_on']['ollama-init']['condition']);
         self::assertStringContainsString('messenger:consume', implode(' ', $services['worker']['command']));
+        self::assertStringContainsString('new_comments', implode(' ', $services['worker']['command']));
         self::assertSame(['pull', 'gpt-oss-safeguard:20b'], $services['ollama-init']['command']);
 
         self::assertSame(['tools'], $services['token']['profiles']);

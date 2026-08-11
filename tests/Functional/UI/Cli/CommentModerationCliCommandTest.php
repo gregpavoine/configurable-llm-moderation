@@ -94,6 +94,31 @@ final class CommentModerationCliCommandTest extends KernelTestCase
         self::assertSame('manual_review_required', $payload['moderationReason'] ?? null);
     }
 
+    public function testItRunsABoundedBatchAcrossArticles(): void
+    {
+        $application = new Application(self::bootKernel());
+        $this->createSchema();
+
+        foreach (['article-a', 'article-b', 'article-c'] as $source) {
+            $add = new CommandTester($application->find('app:comments:add'));
+            self::assertSame(0, $add->execute([
+                '--publisher' => 'cli-site',
+                '--source' => $source,
+                '--body' => 'Commentaire a reviser.',
+            ]));
+        }
+
+        $batch = new CommandTester($application->find('app:comments:moderate-batch'));
+        self::assertSame(0, $batch->execute(['--limit' => '2']));
+        $payload = $this->json($batch);
+
+        self::assertSame(2, $payload['processed'] ?? null);
+        self::assertSame(2, $payload['limit'] ?? null);
+        self::assertCount(2, $payload['items'] ?? []);
+        self::assertSame('manual_review_required', $payload['items'][0]['moderationReason'] ?? null);
+        self::assertSame('manual_review_required', $payload['items'][1]['moderationReason'] ?? null);
+    }
+
     private function createSchema(): void
     {
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);

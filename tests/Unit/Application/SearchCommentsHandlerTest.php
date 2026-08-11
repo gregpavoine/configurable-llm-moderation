@@ -120,6 +120,11 @@ final class RecordingSearchCommentRepository implements CommentRepository
 
         return $this->total;
     }
+
+    public function pendingForModeration(int $limit): array
+    {
+        throw new \LogicException('Unexpected pending moderation lookup.');
+    }
 }
 
 final class FailingSearchCommentRepository implements CommentRepository
@@ -140,6 +145,11 @@ final class FailingSearchCommentRepository implements CommentRepository
     }
 
     public function count(?string $publisher, ?ModerationStatus $status): int
+    {
+        throw new \LogicException('Repository must not be called.');
+    }
+
+    public function pendingForModeration(int $limit): array
     {
         throw new \LogicException('Repository must not be called.');
     }

@@ -4,6 +4,8 @@ framework:
         transports:
             async:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+            new_comments:
+                dsn: '%env(MESSENGER_NEW_COMMENTS_TRANSPORT_DSN)%'
                 rate_limiter: moderation_provider
                 retry_strategy:
                     max_retries: 3
@@ -12,4 +14,4 @@ framework:
                     max_delay: 10000
             failed: '%env(MESSENGER_FAILED_TRANSPORT_DSN)%'
         routing:
-            Gsoi\CommentModeration\Application\Command\ModerateComment\ModerateCommentCommand: async
+            Gsoi\CommentModeration\Application\Command\ModerateComment\ModerateCommentCommand: new_comments

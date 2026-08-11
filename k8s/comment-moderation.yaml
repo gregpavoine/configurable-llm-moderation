@@ -16,6 +16,7 @@ items:
       APP_DEBUG: "0"
       DATABASE_URL: sqlite:////app/var/data.db
       MESSENGER_TRANSPORT_DSN: doctrine://default?queue_name=moderation
+      MESSENGER_NEW_COMMENTS_TRANSPORT_DSN: doctrine://default?queue_name=new_comments
       MESSENGER_FAILED_TRANSPORT_DSN: doctrine://default?queue_name=failed
       JWT_SECRET_KEY: /app/config/jwt/private.pem
       JWT_PUBLIC_KEY: /app/config/jwt/public.pem
@@ -315,6 +316,7 @@ items:
                 - php
                 - bin/console
                 - messenger:consume
+                - new_comments
                 - async
                 - --time-limit=3600
                 - --memory-limit=256M

@@ -281,7 +281,41 @@ Vérifier ensuite :
 docker compose --env-file .env.docker exec -T php php bin/console app:comments:status "$comment_id"
 ```
 
-### 7. Tester un commentaire Facebook en CLI indirecte
+### 7. Modérer un batch de commentaires pending
+
+Le batch prend les plus anciens commentaires `pending`, tous articles et toutes sources confondus.
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:moderate-batch --limit=20
+```
+
+Réponse type :
+
+```json
+{
+  "items": [],
+  "processed": 0,
+  "limit": 20
+}
+```
+
+Créer plusieurs commentaires puis lancer un batch court :
+
+```bash
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:add \
+  --publisher=site-a \
+  --source=article-1 \
+  --body="Commentaire article 1"
+
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:add \
+  --publisher=site-a \
+  --source=article-2 \
+  --body="MACRON tu es un nazi"
+
+docker compose --env-file .env.docker exec -T php php bin/console app:comments:moderate-batch --limit=2
+```
+
+### 8. Tester un commentaire Facebook en CLI indirecte
 
 Il n'y a pas de commande CLI dédiée à Facebook, car Facebook entre par webhook HTTP signé.
 
@@ -303,6 +337,7 @@ POST       /comments
 GET        /comments
 GET        /comments/{id}
 POST       /comments/{id}/moderation
+POST       /comments/moderation/batch
 GET|HEAD   /webhooks/facebook/comments
 POST       /webhooks/facebook/comments
 GET        /doc/
@@ -473,7 +508,30 @@ done
 
 Ne pas utiliser une variable shell appelée `status` sous `zsh`, car elle est réservée en lecture seule.
 
-### 6. Tester le webhook Facebook
+### 6. Modérer un batch via API
+
+Cette route est protégée par JWT modérateur. Elle traite les commentaires `pending` les plus anciens, tous articles confondus.
+
+```bash
+curl -fsS -X POST "$api_base_url/comments/moderation/batch" \
+  -H "Authorization: Bearer $moderator_jwt" \
+  -H 'Content-Type: application/json' \
+  --data '{"limit":20}'
+```
+
+Réponse attendue :
+
+```json
+{
+  "items": [],
+  "processed": 0,
+  "limit": 20
+}
+```
+
+La limite doit être comprise entre `1` et `100`.
+
+### 7. Tester le webhook Facebook
 
 Configurer `.env.docker` :
 
@@ -571,7 +629,7 @@ Le commentaire créé doit contenir :
 }
 ```
 
-### 7. Tester les erreurs courantes
+### 8. Tester les erreurs courantes
 
 Lecture sans JWT :
 
@@ -641,6 +699,7 @@ HTTP/1.1 401 Unauthorized
 | Paginer | `--limit= --offset=` | `?limit=&offset=` |
 | Voir un commentaire | `app:comments:status` | `GET /comments/{id}` |
 | Modérer manuellement | `app:comments:moderate` | `POST /comments/{id}/moderation` |
+| Modérer un batch pending | `app:comments:moderate-batch` | `POST /comments/moderation/batch` |
 | Relancer le LLM sur un commentaire | `app:comments:moderate-llm` | non exposé actuellement |
 | Tester le LLM sur texte brut | `app:llm:moderate` | non exposé actuellement |
 | Checker le LLM | `app:llm:status` | non exposé actuellement |
@@ -654,4 +713,6 @@ HTTP/1.1 401 Unauthorized
 - La modération manuelle ne s'applique qu'aux commentaires `pending`.
 - Si le LLM est absent ou non fiable, le commentaire reste `pending`.
 - Si le LLM répond correctement, le worker passe le commentaire en `published` ou `rejected`.
+- La queue `new_comments` traite les nouveaux commentaires indépendamment de l'article.
+- Le batch traite les commentaires `pending` les plus anciens, tous articles confondus, avec une limite maximale de `100`.
 - La décision Facebook est appliquée dans la base interne. Le système ne masque/supprime pas encore automatiquement le commentaire côté Facebook via Graph API.

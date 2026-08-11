@@ -157,4 +157,13 @@ final class ManuallyModeratedCommentRepository implements CommentRepository
     {
         return 0;
     }
+
+    public function pendingForModeration(int $limit): array
+    {
+        if (null === $this->comment || !$this->comment->isPending()) {
+            return [];
+        }
+
+        return [$this->comment];
+    }
 }

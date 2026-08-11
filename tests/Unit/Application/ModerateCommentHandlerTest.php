@@ -131,6 +131,15 @@ final class ModerationCommentRepository implements CommentRepository
     {
         return 0;
     }
+
+    public function pendingForModeration(int $limit): array
+    {
+        if (null === $this->comment || !$this->comment->isPending()) {
+            return [];
+        }
+
+        return [$this->comment];
+    }
 }
 
 final readonly class FixedModerationService implements ModerationService
