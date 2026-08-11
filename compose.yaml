@@ -14,10 +14,10 @@ x-app-environment: &app-environment
     JWT_SECRET_KEY: /app/config/jwt/private.pem
     JWT_PUBLIC_KEY: /app/config/jwt/public.pem
     JWT_PASSPHRASE: '${JWT_PASSPHRASE:-}'
-    MODERATION_LLM_BASE_URL: ''
-    MODERATION_LLM_MODEL: ''
-    MODERATION_LLM_API_KEY: ''
-    MODERATION_LLM_TIMEOUT: '${MODERATION_LLM_TIMEOUT:-10}'
+    MODERATION_LLM_BASE_URL: '${MODERATION_LLM_BASE_URL-http://ollama:11434/v1}'
+    MODERATION_LLM_MODEL: '${MODERATION_LLM_MODEL-llama3.2}'
+    MODERATION_LLM_API_KEY: '${MODERATION_LLM_API_KEY-}'
+    MODERATION_LLM_TIMEOUT: '${MODERATION_LLM_TIMEOUT-10}'
     FACEBOOK_WEBHOOK_VERIFY_TOKEN: '${FACEBOOK_WEBHOOK_VERIFY_TOKEN:-}'
     FACEBOOK_APP_SECRET: '${FACEBOOK_APP_SECRET:-}'
 
@@ -98,7 +98,7 @@ services:
 
     ollama-init:
         image: '${OLLAMA_IMAGE:-ollama/ollama:latest}'
-        command: ['pull', '${OLLAMA_MODEL:-llama3.2}']
+        command: ['pull', '${MODERATION_LLM_MODEL-llama3.2}']
         depends_on:
             ollama:
                 condition: service_healthy
@@ -116,12 +116,7 @@ services:
                 condition: service_completed_successfully
             ollama-init:
                 condition: service_completed_successfully
-        environment:
-            <<: *app-environment
-            MODERATION_LLM_BASE_URL: '${MODERATION_LLM_BASE_URL-http://127.0.0.1:11434/v1}'
-            MODERATION_LLM_MODEL: '${MODERATION_LLM_MODEL-llama3.2}'
-            MODERATION_LLM_API_KEY: '${MODERATION_LLM_API_KEY-}'
-        network_mode: service:ollama
+        environment: *app-environment
         restart: unless-stopped
         volumes: *app-volumes
 

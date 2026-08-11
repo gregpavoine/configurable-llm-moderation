@@ -65,8 +65,17 @@ Le worker utilise un fournisseur OpenAI-compatible si les variables sont renseig
 Ollama local dans Docker :
 
 ```dotenv
-MODERATION_LLM_BASE_URL=http://127.0.0.1:11434/v1
+MODERATION_LLM_BASE_URL=http://ollama:11434/v1
 MODERATION_LLM_MODEL=llama3.2
+MODERATION_LLM_API_KEY=
+MODERATION_LLM_TIMEOUT=30
+```
+
+LM Studio ou autre fournisseur compatible OpenAI lancé sur la machine hôte :
+
+```dotenv
+MODERATION_LLM_BASE_URL=http://host.docker.internal:1234/v1
+MODERATION_LLM_MODEL=local-model
 MODERATION_LLM_API_KEY=
 MODERATION_LLM_TIMEOUT=30
 ```

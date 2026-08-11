@@ -90,11 +90,20 @@ Résultat attendu :
 
 Copier ou laisser `launch.sh` créer `.env.docker`, puis ajuster les variables selon le besoin.
 
-LLM local via Ollama :
+LLM local via Ollama dans Docker :
 
 ```dotenv
-MODERATION_LLM_BASE_URL=http://127.0.0.1:11434/v1
+MODERATION_LLM_BASE_URL=http://ollama:11434/v1
 MODERATION_LLM_MODEL=llama3.2
+MODERATION_LLM_API_KEY=
+MODERATION_LLM_TIMEOUT=30
+```
+
+LM Studio ou autre fournisseur compatible OpenAI lancé sur la machine hôte :
+
+```dotenv
+MODERATION_LLM_BASE_URL=http://host.docker.internal:1234/v1
+MODERATION_LLM_MODEL=local-model
 MODERATION_LLM_API_KEY=
 MODERATION_LLM_TIMEOUT=30
 ```
@@ -373,11 +382,20 @@ Expected response:
 
 Let `launch.sh` create `.env.docker`, then adjust variables as needed.
 
-Local Ollama LLM:
+Local Ollama LLM in Docker:
 
 ```dotenv
-MODERATION_LLM_BASE_URL=http://127.0.0.1:11434/v1
+MODERATION_LLM_BASE_URL=http://ollama:11434/v1
 MODERATION_LLM_MODEL=llama3.2
+MODERATION_LLM_API_KEY=
+MODERATION_LLM_TIMEOUT=30
+```
+
+LM Studio or another OpenAI-compatible provider running on the host machine:
+
+```dotenv
+MODERATION_LLM_BASE_URL=http://host.docker.internal:1234/v1
+MODERATION_LLM_MODEL=local-model
 MODERATION_LLM_API_KEY=
 MODERATION_LLM_TIMEOUT=30
 ```

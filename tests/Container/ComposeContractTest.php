@@ -24,7 +24,7 @@ final class ComposeContractTest extends TestCase
             'APP_SECRET' => false,
             'JWT_PASSPHRASE' => false,
             'MODERATION_LLM_BASE_URL' => false,
-            'MODERATION_LLM_MODEL' => false,
+            'MODERATION_LLM_MODEL' => 'gpt-oss-safeguard:20b',
             'MODERATION_LLM_API_KEY' => false,
             'FACEBOOK_APP_SECRET' => false,
             'FACEBOOK_WEBHOOK_VERIFY_TOKEN' => false,
@@ -50,9 +50,12 @@ final class ComposeContractTest extends TestCase
         self::assertSame('127.0.0.1', $services['ollama']['ports'][0]['host_ip']);
         self::assertSame('11435', $services['ollama']['ports'][0]['published']);
 
-        self::assertSame('service:ollama', $services['worker']['network_mode']);
-        self::assertSame('http://127.0.0.1:11434/v1', $services['worker']['environment']['MODERATION_LLM_BASE_URL']);
+        self::assertArrayNotHasKey('network_mode', $services['worker']);
+        self::assertSame('http://ollama:11434/v1', $services['worker']['environment']['MODERATION_LLM_BASE_URL']);
+        self::assertSame('gpt-oss-safeguard:20b', $services['worker']['environment']['MODERATION_LLM_MODEL']);
         self::assertSame('', $services['worker']['environment']['MODERATION_LLM_API_KEY']);
+        self::assertSame('http://ollama:11434/v1', $services['php']['environment']['MODERATION_LLM_BASE_URL']);
+        self::assertSame('gpt-oss-safeguard:20b', $services['php']['environment']['MODERATION_LLM_MODEL']);
         self::assertSame('', $services['worker']['environment']['JWT_PASSPHRASE']);
         self::assertSame('replace-with-meta-app-secret', $services['php']['environment']['FACEBOOK_APP_SECRET']);
         self::assertSame('replace-with-meta-verify-token', $services['php']['environment']['FACEBOOK_WEBHOOK_VERIFY_TOKEN']);
@@ -61,7 +64,7 @@ final class ComposeContractTest extends TestCase
         self::assertSame('service_completed_successfully', $services['worker']['depends_on']['init']['condition']);
         self::assertSame('service_completed_successfully', $services['worker']['depends_on']['ollama-init']['condition']);
         self::assertStringContainsString('messenger:consume', implode(' ', $services['worker']['command']));
-        self::assertStringContainsString('pull', implode(' ', $services['ollama-init']['command']));
+        self::assertSame(['pull', 'gpt-oss-safeguard:20b'], $services['ollama-init']['command']);
 
         self::assertSame(['tools'], $services['token']['profiles']);
         self::assertSame(['php', 'bin/console', 'app:jwt:issue-moderator'], $services['token']['entrypoint']);
