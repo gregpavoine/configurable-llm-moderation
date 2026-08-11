@@ -8,6 +8,16 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class OpenApiDocumentationTest extends WebTestCase
 {
+    public function testSwaggerUiIsPubliclyAvailable(): void
+    {
+        $client = self::createClient();
+
+        $client->request('GET', '/doc/');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('swagger-ui', $client->getResponse()->getContent());
+    }
+
     public function testOpenApiJsonIsPubliclyAvailable(): void
     {
         $client = self::createClient();

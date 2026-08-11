@@ -1,3 +1,0 @@
-framework:
-    assets: ~
-    trusted_proxies: 'private_ranges'
