@@ -43,7 +43,7 @@ final class OpenAiCompatibleModerationServiceTest extends TestCase
             $body = json_decode($options['body'], true, 512, JSON_THROW_ON_ERROR);
             self::assertSame('qwen3:8b', $body['model']);
             self::assertSame(0, $body['temperature']);
-            self::assertSame(64, $body['max_tokens']);
+            self::assertSame(256, $body['max_tokens']);
             self::assertSame('system', $body['messages'][0]['role']);
             self::assertStringContainsString('threat', $body['messages'][0]['content']);
             self::assertStringContainsString('hate or discrimination', $body['messages'][0]['content']);
@@ -51,6 +51,7 @@ final class OpenAiCompatibleModerationServiceTest extends TestCase
             self::assertStringContainsString('defamation', $body['messages'][0]['content']);
             self::assertStringContainsString('terrorism praise', $body['messages'][0]['content']);
             self::assertStringContainsString('child sexual content', $body['messages'][0]['content']);
+            self::assertStringContainsString('Do not include reasoning', $body['messages'][0]['content']);
             self::assertSame(['role' => 'user', 'content' => $comment], $body['messages'][1]);
             self::assertSame([
                 'type' => 'json_schema',
