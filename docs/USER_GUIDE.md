@@ -52,6 +52,13 @@ Si le volume de commentaires dépasse la capacité du LLM, le service ne bloque 
 Depuis la racine du projet :
 
 ```bash
+cp .env.example .env
+cp .env.docker.example .env.docker
+```
+
+Adapter `.env` pour un lancement Symfony local et `.env.docker` pour Docker. Les deux fichiers réels restent locaux et ne doivent pas être commités.
+
+```bash
 ./launch.sh
 ```
 

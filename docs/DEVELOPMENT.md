@@ -221,6 +221,15 @@ Services :
 - `ollama-init` : téléchargement du modèle;
 - `token` : profil tools pour émettre un JWT local.
 
+Initialisation des variables :
+
+```bash
+cp .env.example .env
+cp .env.docker.example .env.docker
+```
+
+`.env` sert au lancement Symfony local. `.env.docker` sert à Docker Compose. Ces fichiers réels sont ignorés par Git et doivent contenir les valeurs adaptées à l'environnement.
+
 Démarrage :
 
 ```bash

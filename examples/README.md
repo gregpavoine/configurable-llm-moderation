@@ -10,6 +10,13 @@ Il couvre deux usages :
 Les exemples supposent que la stack Docker est lancée :
 
 ```bash
+cp .env.example .env
+cp .env.docker.example .env.docker
+```
+
+Adapter les valeurs dans `.env` et `.env.docker` avant de lancer les tests.
+
+```bash
 ./launch.sh
 ```
 

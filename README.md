@@ -58,6 +58,13 @@ Les nouveaux commentaires sont mis en queue indépendamment de l'article. En cas
 Depuis la racine du projet :
 
 ```bash
+cp .env.example .env
+cp .env.docker.example .env.docker
+```
+
+Adapter ensuite `.env` pour un lancement Symfony local et `.env.docker` pour Docker. Ces fichiers réels restent locaux et ne doivent pas être commités.
+
+```bash
 ./launch.sh
 ```
 
@@ -298,7 +305,7 @@ Avant production, remplacer les placeholders du Secret Kubernetes, utiliser TLS 
 
 ### Usage de l'IA
 
-Codex a aidé à analyser, structurer, générer et vérifier le code, les tests et la documentation. Les décisions d'architecture, corrections et validations finales restent explicitées dans le dépôt.
+Codex a servi à structurer le projet, coder certaines parties, améliorer la structure du code, vérifier les aspects sécurité et la conformité avec la demande initiale, proposer des axes d'amélioration, rédiger la documentation et écrire les tests.
 
 ---
 
@@ -351,6 +358,13 @@ New comments are queued independently of the article. If moderation falls behind
 ### Quick start with Docker
 
 From the project root:
+
+```bash
+cp .env.example .env
+cp .env.docker.example .env.docker
+```
+
+Then adjust `.env` for local Symfony usage and `.env.docker` for Docker. These real files stay local and must not be committed.
 
 ```bash
 ./launch.sh
@@ -593,4 +607,4 @@ Before production, replace Kubernetes Secret placeholders, use real TLS, a durab
 
 ### AI usage
 
-Codex helped analyze, structure, generate and verify code, tests and documentation. Architecture choices, fixes and final validations are explicitly represented in the repository.
+Codex was used to structure the project, code some parts, improve the code structure, verify security aspects and compliance with the initial request, propose improvement areas, write the documentation and write the tests.
