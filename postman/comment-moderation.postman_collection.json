@@ -1,0 +1,496 @@
+{
+  "info": {
+    "_postman_id": "4f4f8fb0-6870-4a2a-a489-dc8c7a97a1c4",
+    "name": "Comment Moderation API",
+    "description": "Docker-first test collection for the comment moderation API, JWT protected operator routes, and signed Facebook webhook ingestion.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "moderator_jwt",
+      "value": ""
+    },
+    {
+      "key": "comment_id",
+      "value": ""
+    },
+    {
+      "key": "facebook_verify_token",
+      "value": "token-partage-avec-meta"
+    },
+    {
+      "key": "facebook_app_secret",
+      "value": "secret-app-meta-hors-git"
+    },
+    {
+      "key": "facebook_payload",
+      "value": "{\"object\":\"page\",\"entry\":[{\"id\":\"page-42\",\"changes\":[{\"field\":\"feed\",\"value\":{\"item\":\"comment\",\"post_id\":\"post-99\",\"comment_id\":\"comment-12\",\"message\":\"Merci pour cet article Facebook.\",\"from\":{\"id\":\"user-7\"}}}]}]}"
+    },
+    {
+      "key": "facebook_signature",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('health returns 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('service is ok', function () {",
+              "  pm.expect(pm.response.json()).to.deep.equal({ status: 'ok' });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "02 - Anonymous list is rejected",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('anonymous list requires JWT', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/comments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "comments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "03 - Authenticated list works",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('operator can list comments', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('response has items and pagination metadata', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('items');",
+              "  pm.expect(body).to.have.property('total');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{moderator_jwt}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/comments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "comments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "04 - Submit direct comment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('comment is accepted for moderation', function () {",
+              "  pm.response.to.have.status(202);",
+              "});",
+              "",
+              "pm.test('comment id is stored for next requests', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.status).to.eql('pending');",
+              "  pm.expect(body.id).to.be.a('string');",
+              "  pm.collectionVariables.set('comment_id', body.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"publisher\": \"postman-site\",\n  \"source\": \"article-42\",\n  \"authorId\": \"postman-user-7\",\n  \"body\": \"Merci pour cet article clair et utile.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/comments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "comments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "05 - Read submitted comment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('operator can read the comment', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('comment payload matches submitted data', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.id).to.eql(pm.collectionVariables.get('comment_id'));",
+              "  pm.expect(body.publisher).to.eql('postman-site');",
+              "  pm.expect(body.source).to.eql('article-42');",
+              "  pm.expect(['pending', 'published', 'rejected']).to.include(body.status);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{moderator_jwt}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/comments/{{comment_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "comments",
+            "{{comment_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "06 - Manual moderation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('manual moderation succeeds or reports final-state conflict', function () {",
+              "  pm.expect([200, 409]).to.include(pm.response.code);",
+              "});",
+              "",
+              "if (pm.response.code === 200) {",
+              "  pm.test('comment is manually rejected', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.status).to.eql('rejected');",
+              "    pm.expect(body.moderationReason).to.eql('postman_manual_test');",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{moderator_jwt}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"rejected\",\n  \"reason\": \"postman_manual_test\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/comments/{{comment_id}}/moderation",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "comments",
+            "{{comment_id}}",
+            "moderation"
+          ]
+        }
+      }
+    },
+    {
+      "name": "07 - Facebook verify challenge",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('facebook challenge returns raw challenge', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.text()).to.eql('challenge-123');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/webhooks/facebook/comments?hub.mode=subscribe&hub.verify_token={{facebook_verify_token}}&hub.challenge=challenge-123",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "facebook",
+            "comments"
+          ],
+          "query": [
+            {
+              "key": "hub.mode",
+              "value": "subscribe"
+            },
+            {
+              "key": "hub.verify_token",
+              "value": "{{facebook_verify_token}}"
+            },
+            {
+              "key": "hub.challenge",
+              "value": "challenge-123"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "08 - Facebook signed comment",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const payload = pm.collectionVariables.get('facebook_payload');",
+              "const secret = pm.collectionVariables.get('facebook_app_secret');",
+              "const signature = 'sha256=' + CryptoJS.HmacSHA256(payload, secret).toString(CryptoJS.enc.Hex);",
+              "pm.collectionVariables.set('facebook_signature', signature);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('signed facebook comment is received', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json()).to.deep.equal({ received: 1, ignored: 0 });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Hub-Signature-256",
+            "value": "{{facebook_signature}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{facebook_payload}}"
+        },
+        "url": {
+          "raw": "{{base_url}}/webhooks/facebook/comments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "facebook",
+            "comments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "09 - Search Facebook comments",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('operator can search facebook page comments', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('search response is a collection', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('items');",
+              "  pm.expect(body).to.have.property('total');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{moderator_jwt}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/comments?publisher=facebook_page:page-42",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "comments"
+          ],
+          "query": [
+            {
+              "key": "publisher",
+              "value": "facebook_page:page-42"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "10 - Facebook invalid signature is rejected",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('invalid facebook signature is rejected', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Hub-Signature-256",
+            "value": "sha256=invalid"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{facebook_payload}}"
+        },
+        "url": {
+          "raw": "{{base_url}}/webhooks/facebook/comments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "facebook",
+            "comments"
+          ]
+        }
+      }
+    }
+  ]
+}

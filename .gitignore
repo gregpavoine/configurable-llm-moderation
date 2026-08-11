@@ -1,5 +1,4 @@
-
-###> symfony/framework-bundle ###
+###> Symfony ###
 /.env.local
 /.env.local.php
 /.env.*.local
@@ -7,18 +6,231 @@
 /public/bundles/
 /var/
 /vendor/
-###< symfony/framework-bundle ###
+###< Symfony ###
 
-###> squizlabs/php_codesniffer ###
-/.phpcs-cache
-/phpcs.xml
-###< squizlabs/php_codesniffer ###
+###> Environment / secrets ###
+.env.local
+.env.*.local
+.env.override
+.env.secret
+.env.secrets
+.env.docker
+.env.production
+.env.staging
+.env.development.local
 
-###> phpunit/phpunit ###
-/phpunit.xml
-/.phpunit.cache/
-###< phpunit/phpunit ###
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
 
-.idea
-.ecs_cache
-/.cursor
+credentials.json
+credentials*.json
+secrets.json
+secrets*.json
+auth.json
+auth.local.json
+
+###> Composer ###
+/vendor/
+composer.phar
+composer.lock.tmp
+.phpunit.result.cache
+
+###> Symfony cache / logs ###
+/var/cache/
+/var/log/
+/var/sessions/
+/var/tmp/
+
+###> PHPUnit / testing ###
+.phpunit.cache/
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+coverage.xml
+coverage.xml.tmp
+.clover
+junit.xml
+test-results/
+
+###> PHPStan ###
+.phpstan.cache
+.phpstan-result-cache
+phpstan.neon.local
+
+###> Psalm ###
+.psalm-cache/
+psalm.xml.local
+
+###> PHP CS Fixer ###
+.php-cs-fixer.cache
+.php_cs.cache
+
+###> PHP_CodeSniffer ###
+.phpcs-cache
+
+###> Infection ###
+infection.log
+infection.log.txt
+
+###> Rector ###
+.rector-cache/
+
+###> Symfony CLI ###
+.symfony.local.yaml
+
+###> Docker ###
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.*.local.yml
+
+.docker/
+docker-data/
+docker/volumes/
+docker/tmp/
+
+###> Docker runtime/data ###
+mysql-data/
+postgres-data/
+mariadb-data/
+redis-data/
+rabbitmq-data/
+elasticsearch-data/
+opensearch-data/
+
+###> Database dumps ###
+*.sql
+*.sql.gz
+*.sql.bz2
+*.sql.xz
+*.dump
+*.backup
+*.sqlite
+*.sqlite3
+*.db
+
+###> Node.js ###
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.yarn/cache/
+.yarn/unplugged/
+.pnpm-store/
+
+###> Frontend builds ###
+/public/build/
+/public/assets/
+/assets/build/
+dist/
+build/
+.cache/
+.parcel-cache/
+.vite/
+
+###> Encore ###
+/public/build/
+npm-debug.log
+yarn-error.log
+
+###> IDE - JetBrains ###
+.idea/
+*.iml
+*.ipr
+*.iws
+
+###> VS Code ###
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+
+###> Vim ###
+*.swp
+*.swo
+*~
+Session.vim
+
+###> macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+###> Linux ###
+*~
+.directory
+.Trash-*
+
+###> Windows ###
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+###> Temporary files ###
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+*.rej
+*.log
+*.pid
+*.pid.lock
+*.lock.tmp
+
+/tmp/
+/temp/
+
+###> Archives ###
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+*.rar
+
+###> SSH / private keys ###
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+.ssh/
+
+###> Certificates ###
+certs/private/
+ssl/private/
+
+###> Local development ###
+.local/
+.local-data/
+storage/
+runtime/
+
+###> Docker Desktop / misc ###
+.dockerignore.local
+
+###> Mercure ###
+mercure.db
+
+###> Messenger / queues ###
+*.messages.db
+
+###> Profiling ###
+.blackfire.yaml.local
+xhprof/
+profiles/
+
+###> Debug ###
+debug/
+dumps/
